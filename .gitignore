@@ -1,0 +1,32 @@
+# Build trees.  Every preset writes under build/.
+build/
+
+# --- C/C++ ---
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+*.d
+*.pdb
+*.ilk
+
+# --- Rust ---
+target/
+**/*.rs.bk
+vendor/
+.cargo/
+
+# --- Editors and IDEs ---
+.vs/
+.vscode/*
+.idea/
+*.swp
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
