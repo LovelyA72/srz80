@@ -1,0 +1,16 @@
+[package]
+name = "srz80engine"
+version = "0.1.1"
+edition = "2021"
+rust-version = "1.77"
+build = "build.rs"
+description = "SRZ80 Rust engine: rack, cards, bus, clocks, project and execution state behind the stable engine C ABI"
+license-file = "../../LICENSE"
+
+[lib]
+name = "srz80engine"
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+libloading = "=0.8.6"
+serde_json = "=1.0.145"

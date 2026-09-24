@@ -1,0 +1,17 @@
+# The SRZ80 Rust engine workspace.  The C++ GUI, tools and card plugins stay on
+# the engine C ABI in sdk/include/srz80/engine.h; this workspace produces the
+# cdylib that implements it (srz80engine.dll / libsrz80engine.so).
+#
+# Cargo only honours a profile that the workspace root declares, so the release
+# settings live here rather than in the member crate.
+[workspace]
+resolver = "2"
+members = ["srz80engine"]
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+# A Rust panic must not carry an unwinder into the DLL.  It cannot unwind
+# through the C ABI either way.
+panic = "abort"
+strip = "symbols"

@@ -1,0 +1,29 @@
+Copyright (c) 2026 Kashouryo Project. All rights reserved.
+
+This source code and all accompanying files are proprietary.
+
+Except for the limited rights necessary to access, view, and fork this
+repository through GitHub as permitted by GitHub's Terms of Service, no
+license or other rights are granted to you.
+
+Unless and until expressly authorized in writing by the copyright holder, 
+and subject to revocation of that authorization at any time, you may not
+copy, reproduce, modify, distribute, publish, sublicense, sell, commercially
+exploit, or create derivative works from this software, in whole or in part,
+except to the extent otherwise permitted by applicable law.
+
+The public availability of this source code does not constitute a grant of
+any additional license or permission.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Third-party components are not covered by the terms above. Each third-party
+dependency, vendored component, and bundled library remains subject to its
+respective license terms. See third_party/README.md for applicable versions,
+licenses, copyright notices, and other required attribution or distribution
+information.

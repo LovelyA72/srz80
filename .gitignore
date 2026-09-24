@@ -1,6 +1,36 @@
 # Build trees.  Every preset writes under build/.
 build/
 
+# Agents are allowed but keep them to contributors themselves
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+COPILOT.md
+
+.agents/
+.agent/
+.claude/
+.codex/
+.cursor/
+.copilot/
+.gemini/
+.windsurf/
+.continue/
+.aider/
+
+.aider.conf.yml
+.aiderignore
+.cursorignore
+.cursorules
+.cursorrules
+.windsurfrules
+
+.mcp.json
+mcp.json
+
+# Scratch space, for you and maybe your agents
+scratch/
+
 # --- C/C++ ---
 *.o
 *.obj

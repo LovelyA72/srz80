@@ -1,0 +1,67 @@
+{
+  "version": 5,
+  "cmakeMinimumRequired": {"major": 3, "minor": 24, "patch": 0},
+  "configurePresets": [
+    {
+      "name": "mingw-debug",
+      "displayName": "MinGW GCC Debug (make)",
+      "generator": "MinGW Makefiles",
+      "binaryDir": "${sourceDir}/build/mingw-debug",
+      "environment": {"PATH": "C:/msys64/mingw64/bin;$penv{PATH}"},
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "C:/msys64/mingw64/bin/gcc.exe",
+        "CMAKE_CXX_COMPILER": "C:/msys64/mingw64/bin/g++.exe"
+      }
+    },
+    {
+      "name": "mingw-release",
+      "displayName": "MinGW GCC Release (make)",
+      "inherits": "mingw-debug",
+      "binaryDir": "${sourceDir}/build/mingw-release",
+      "cacheVariables": {"CMAKE_BUILD_TYPE": "Release"}
+    },
+    {
+      "name": "mingwcross-debug",
+      "displayName": "MinGW-w64 Cross Debug (Linux make)",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/mingwcross-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_SYSTEM_NAME": "Windows",
+        "CMAKE_SYSTEM_PROCESSOR": "x86_64",
+        "CMAKE_C_COMPILER": "x86_64-w64-mingw32-gcc",
+        "CMAKE_CXX_COMPILER": "x86_64-w64-mingw32-g++"
+      }
+    },
+    {
+      "name": "mingwcross-release",
+      "displayName": "MinGW-w64 Cross Release (Linux make)",
+      "inherits": "mingwcross-debug",
+      "binaryDir": "${sourceDir}/build/mingwcross-release",
+      "cacheVariables": {"CMAKE_BUILD_TYPE": "Release"}
+    },
+    {
+      "name": "gcc-debug",
+      "displayName": "GCC Debug (make)",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/gcc-debug",
+      "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug"}
+    },
+    {
+      "name": "gcc-release",
+      "displayName": "GCC Release (make)",
+      "inherits": "gcc-debug",
+      "binaryDir": "${sourceDir}/build/gcc-release",
+      "cacheVariables": {"CMAKE_BUILD_TYPE": "Release"}
+    }
+  ],
+  "buildPresets": [
+    {"name": "mingw-debug", "configurePreset": "mingw-debug"},
+    {"name": "mingw-release", "configurePreset": "mingw-release"},
+    {"name": "mingwcross-debug", "configurePreset": "mingwcross-debug"},
+    {"name": "mingwcross-release", "configurePreset": "mingwcross-release"},
+    {"name": "gcc-debug", "configurePreset": "gcc-debug"},
+    {"name": "gcc-release", "configurePreset": "gcc-release"}
+  ]
+}
