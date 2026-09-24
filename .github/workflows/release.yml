@@ -1,0 +1,147 @@
+name: Build release archives
+
+on:
+  push:
+    tags:
+      - "[0-9]*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: tag name to create from the current master branch
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event.inputs.release_tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  tag_master:
+    name: Tag current master
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Create and push release tag
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          TAGGER_NAME: ${{ github.actor }}
+          TAGGER_EMAIL: ${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com
+        run: |
+          if ! git check-ref-format "refs/tags/$RELEASE_TAG"; then
+            echo "Invalid tag name: $RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          if git show-ref --tags --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            echo "Tag already exists: $RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          master_sha="$(git rev-parse HEAD)"
+          git config user.name "$TAGGER_NAME"
+          git config user.email "$TAGGER_EMAIL"
+          git tag --annotate --message "Release $RELEASE_TAG" "$RELEASE_TAG" "$master_sha"
+          git push origin "refs/tags/$RELEASE_TAG"
+
+  build:
+    needs: tag_master
+    if: ${{ always() && (needs.tag_master.result == 'success' || needs.tag_master.result == 'skipped') }}
+    name: Build ${{ matrix.platform }} on Linux
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x64
+            preset: gcc-release
+            executable: srz80_gui
+            engine: libsrz80engine.so
+          - platform: win-x64
+            preset: mingwcross-release
+            executable: srz80_gui.exe
+            engine: srz80engine.dll
+
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+
+      - name: Install Linux and MinGW-w64 build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends \
+            build-essential cmake pkg-config mingw-w64 \
+            libasound2-dev libx11-dev libxext-dev libxrandr-dev \
+            libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev \
+            libxkbcommon-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev
+
+      - name: Install Rust Windows target
+        if: matrix.platform == 'win-x64'
+        run: rustup target add x86_64-pc-windows-gnu
+
+      - name: Configure
+        run: cmake --preset "${{ matrix.preset }}"
+
+      - name: Build
+        run: cmake --build --preset "${{ matrix.preset }}" --parallel 2
+
+      - name: Stage host runtime
+        env:
+          PRESET: ${{ matrix.preset }}
+          EXECUTABLE: ${{ matrix.executable }}
+          ENGINE: ${{ matrix.engine }}
+        run: |
+          runtime="build/$PRESET/bin"
+          test -f "$runtime/$EXECUTABLE"
+          test -f "$runtime/$ENGINE"
+          mkdir -p package/bin
+          cp -a "$runtime/." package/bin/
+
+      - name: Create release archive
+        env:
+          RELEASE_TAG: ${{ github.event.inputs.release_tag || github.ref_name }}
+          PLATFORM: ${{ matrix.platform }}
+        working-directory: package
+        run: cmake -E tar cf ../srz80-"$PLATFORM"-"$RELEASE_TAG".zip --format=zip bin
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: srz80-${{ matrix.platform }}
+          path: srz80-${{ matrix.platform }}-${{ github.event.inputs.release_tag || github.ref_name }}.zip
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub release assets
+    needs: build
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Download release archives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: srz80-*
+          merge-multiple: true
+          path: dist
+
+      - name: Create release if needed and upload archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.inputs.release_tag || github.ref_name }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --verify-tag --generate-notes --title "$RELEASE_TAG"
+          fi
+          gh release upload "$RELEASE_TAG" dist/*.zip --clobber

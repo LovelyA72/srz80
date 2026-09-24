@@ -185,10 +185,6 @@ if(SRZ80_BUILD_GUI)
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       "${CMAKE_CURRENT_SOURCE_DIR}/resources/FontAwesome.otf"
       "${SRZ80_RUNTIME_DIR}/resources/FontAwesome.otf"
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${SRZ80_RUNTIME_DIR}/licenses/text-editor"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      "${imgui_color_text_edit_SOURCE_DIR}/LICENSE"
-      "${SRZ80_RUNTIME_DIR}/licenses/text-editor/LICENSE"
     VERBATIM)
 endif()
 

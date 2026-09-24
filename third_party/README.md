@@ -25,6 +25,16 @@ extract matching releases and set:
 SDL and Dear ImGui are skipped when `SRZ80_BUILD_GUI=OFF`. SDL is linked
 statically into the desktop app.
 
+## Bundled fonts
+
+| Font | Version | License | Notice |
+| --- | --- | --- | --- |
+| [Sarasa Mono SC](https://github.com/be5invis/Sarasa-Gothic) | 1.0.41 (font metadata) | SIL OFL 1.1 | [Copyright notice](fonts/SarasaMonoSC-NOTICE.txt) |
+| [Font Awesome](https://github.com/FortAwesome/Font-Awesome/tree/v4.7.0) | 4.7.0 | SIL OFL 1.1 | [Copyright notice](fonts/FontAwesome-NOTICE.txt) |
+
+Both bundled fonts use the [full SIL Open Font License 1.1](fonts/OFL-1.1.txt).
+GUI builds stage the notices and license beside the fonts under `bin/licenses/fonts/`.
+
 ## Rust dependencies
 
 The engine uses `libloading` 0.8.6 to open native plugins and `serde_json`

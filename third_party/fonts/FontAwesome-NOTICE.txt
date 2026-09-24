@@ -1,0 +1,8 @@
+Font Awesome (resources/FontAwesome.otf)
+Version 4.7.0, as reported by the bundled font.
+Source: https://github.com/FortAwesome/Font-Awesome/tree/v4.7.0
+
+Copyright Dave Gandy 2016. All rights reserved.
+
+This Font Software is licensed under the SIL Open Font License,
+Version 1.1. The full license text is in OFL-1.1.txt in this directory.

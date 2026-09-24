@@ -1,0 +1,12 @@
+Sarasa Mono SC Regular (resources/SarasaMonoSC-Regular.ttf)
+Version 1.0.41, as reported by the bundled font.
+Source: https://github.com/be5invis/Sarasa-Gothic
+
+Copyright (c) 2015-2025, Renzhi Li (aka. Belleve Invis, belleve@typeof.net).
+Portions Copyright (c) 2016 The Inter Project Authors.
+Portions Copyright (c) 2014-2021 Adobe Systems Incorporated
+(http://www.adobe.com/), with Reserved Font Name 'Source'.
+Portions Copyright (c) 2012 Google Inc.
+
+This Font Software is licensed under the SIL Open Font License,
+Version 1.1. The full license text is in OFL-1.1.txt in this directory.
