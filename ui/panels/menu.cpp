@@ -693,7 +693,7 @@ void App::menu() {
             const float bar_top = ImGui::GetWindowPos().y;
             const float bar_bottom = bar_top + ImGui::GetWindowHeight();
             auto *draw = ImGui::GetWindowDrawList();
-            draw->AddRectFilled(ImVec2(p.x, bar_top), ImVec2(p.x + width, bar_bottom),
+            draw->AddRectFilled(ImVec2(p.x, bar_top + 2.0f), ImVec2(p.x + width, bar_bottom - 2.0f),
                                 IM_COL32(255, 0, 0, 255));
             const float center_y = (bar_top + bar_bottom) * 0.5f;
             draw->AddCircleFilled(ImVec2(p.x + 9, center_y), 3.5f, IM_COL32_WHITE);
