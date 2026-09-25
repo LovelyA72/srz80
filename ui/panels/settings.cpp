@@ -450,10 +450,8 @@ void App::settings() {
         }
     }
 
-    // Empty groups are leaves too.
-    for (const auto &top : top_levels)
-        if (children.find(top) == children.end())
-            add_leaf(top);
+    if (!project_text_formats.empty())
+        add_leaf("Plugins");
 
     if (!leaves.contains(selected_category)) {
         if (leaves.empty())
@@ -486,16 +484,18 @@ void App::settings() {
     ImGui::BeginChild("settings-sidebar", ImVec2(180.0f, -footer));
     for (const auto &top : top_levels) {
         const auto it = children.find(top);
-        if (it == children.end()) {
-            if (filtering && !category_matches(top)) continue;
-            if (ImGui::Selectable(top.c_str(), selected_category == top))
-                selected_category = top;
-        } else {
-            bool visible = false;
+        const bool direct = leaves.contains(top) && (!filtering || category_matches(top));
+        bool visible = direct;
+        if (it != children.end()) {
             for (const auto &sub : it->second)
                 visible |= !filtering || category_matches(top + "/" + sub);
-            if (!visible) continue;
-            ImGui::TextDisabled("%s", top.c_str());
+        }
+        if (filtering && !visible && !matches(top, search)) continue;
+        ImGui::TextDisabled("%s", top.c_str());
+        if (direct && ImGui::Selectable(top == "Plugins" ? "Text formats" : "General",
+                                        selected_category == top))
+            selected_category = top;
+        if (it != children.end()) {
             for (const auto &sub : it->second) {
                 const std::string path = top + "/" + sub;
                 if (filtering && !category_matches(path)) continue;
@@ -508,7 +508,6 @@ void App::settings() {
 
     ImGui::SameLine();
     ImGui::BeginChild("settings-content", ImVec2(0.0f, -footer));
-    bool any = false;
     bool open_reset_layout = false;
     for (const auto &category : leaves) {
         if (!filtering && category != selected_category) continue;
@@ -519,7 +518,6 @@ void App::settings() {
             ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthStretch, 1.0f);
             ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, 1.0f);
             auto row = [&](const char *label, const char *description = nullptr) {
-                any = true;
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 ImGui::AlignTextToFramePadding();
@@ -542,10 +540,6 @@ void App::settings() {
                 ImGui::EndDisabled();
             }
             if (category == "Plugins") {
-                if (project_text_formats.empty() && !filtering) {
-                    row("Text formats");
-                    ImGui::TextDisabled("No text formats");
-                }
                 for (const auto &handler : project_text_formats) {
                     if (filtering && !matches(category, search) && !matches(handler->label, search) &&
                         !matches(handler->extension, search) && !matches(handler->plugin_id, search)) continue;
@@ -572,7 +566,6 @@ void App::settings() {
         }
         ImGui::PopID();
     }
-    if (!any) ImGui::TextDisabled(filtering ? "No matching settings." : "No settings in this group.");
     ImGui::PushID("UI/Layout");
     if (open_reset_layout) ImGui::OpenPopup("Reset workspace layout?");
     if (ImGui::BeginPopupModal("Reset workspace layout?", nullptr,
