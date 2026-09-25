@@ -62,18 +62,15 @@ bool has_tooltip(const std::string &text) {
                        [](unsigned char c) { return !std::isspace(c); });
 }
 
-bool render_entry(App *app, const SettingsEntry &entry, const char *search) {
+bool render_entry(App *app, const SettingsEntry &entry) {
     bool changed = false;
     const std::string current = entry_value(app, entry);
-    const std::string label = entry.label.empty() ? entry.name : entry.label;
-    if (!matches(entry.label, search) && !matches(entry.name, search) &&
-        !matches(entry.description, search) && !matches(entry.category, search))
-        return false;
+    ImGui::SetNextItemWidth(-FLT_MIN);
 
     switch (entry.type) {
     case Srh_CONFIG_BOOL: {
         bool value = current == "1" || current == "true";
-        if (ImGui::Checkbox(label.c_str(), &value)) {
+        if (ImGui::Checkbox("##value", &value)) {
             changed = set_entry_value(app, entry, value ? "1" : "0");
         }
         break;
@@ -91,8 +88,8 @@ bool render_entry(App *app, const SettingsEntry &entry, const char *search) {
         const int maximum = input_volume ? 200 : 100;
         if (percentage)
             value = std::clamp(value, 0, maximum);
-        const bool edited = percentage ? ImGui::SliderInt(label.c_str(), &value, 0, maximum, "%d%%")
-                                       : ImGui::InputInt(label.c_str(), &value);
+        const bool edited = percentage ? ImGui::SliderInt("##value", &value, 0, maximum, "%d%%")
+                                       : ImGui::InputInt("##value", &value);
         if (edited) {
             if (entry.name == "audio.input_channels") value = std::clamp(value, 1, 8);
             changed = set_entry_value(app, entry, std::to_string(value));
@@ -126,8 +123,8 @@ bool render_entry(App *app, const SettingsEntry &entry, const char *search) {
         if (video_scale)
             value = std::clamp(value, 0.5f, 4.0f);
         const bool edited = video_scale
-                                ? ImGui::SliderFloat(label.c_str(), &value, 0.5f, 4.0f, "%.1fx")
-                                : ImGui::InputFloat(label.c_str(), &value, 0.0f, 0.0f, "%g");
+                                ? ImGui::SliderFloat("##value", &value, 0.5f, 4.0f, "%.1fx")
+                                : ImGui::InputFloat("##value", &value, 0.0f, 0.0f, "%g");
         if (edited) {
             char buffer[64];
             std::snprintf(buffer, sizeof(buffer), "%g", value);
@@ -165,7 +162,7 @@ bool render_entry(App *app, const SettingsEntry &entry, const char *search) {
                 selected = static_cast<int>(i);
                 break;
             }
-        if (ImGui::Combo(label.c_str(), &selected, label_ptrs.data(),
+        if (ImGui::Combo("##value", &selected, label_ptrs.data(),
                          static_cast<int>(label_ptrs.size()))) {
             changed = set_entry_value(app, entry, labels[static_cast<size_t>(selected)]);
         }
@@ -181,8 +178,12 @@ bool render_entry(App *app, const SettingsEntry &entry, const char *search) {
         std::snprintf(buffer.data(), buffer.size(), "%s", current.c_str());
         bool edited = false;
         if (entry.name == "video.shader_path") {
-            ImGui::PushID(entry.name.c_str());
-            edited = ImGui::InputText("##video-shader-path", buffer.data(), buffer.size());
+            const float buttons_width = ImGui::CalcTextSize("Browse...").x +
+                                        ImGui::CalcTextSize("Reload").x +
+                                        ImGui::GetStyle().FramePadding.x * 4 +
+                                        ImGui::GetStyle().ItemSpacing.x * 2;
+            ImGui::SetNextItemWidth(std::max(80.0f, ImGui::GetContentRegionAvail().x - buttons_width));
+            edited = ImGui::InputText("##value", buffer.data(), buffer.size());
             ImGui::SameLine();
             if (ImGui::Button("Browse...")) app->select_video_shader_file_dialog();
             ImGui::SameLine();
@@ -192,11 +193,8 @@ bool render_entry(App *app, const SettingsEntry &entry, const char *search) {
                 app->video_shader_error.clear();
             }
             ImGui::EndDisabled();
-            ImGui::SameLine();
-            ImGui::TextUnformatted(label.c_str());
-            ImGui::PopID();
         } else {
-            edited = ImGui::InputText(label.c_str(), buffer.data(), buffer.size());
+            edited = ImGui::InputText("##value", buffer.data(), buffer.size());
         }
         if (edited) {
             changed = set_entry_value(app, entry, buffer.data());
@@ -394,7 +392,10 @@ void App::settings() {
     if (!show_settings)
         return;
 
-    ImGui::SetNextWindowSize(ImVec2(760, 560), ImGuiCond_FirstUseEver);
+    const auto *viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(std::min(920.0f, viewport->WorkSize.x * 0.9f),
+                                  std::min(620.0f, viewport->WorkSize.y * 0.9f)), ImGuiCond_Appearing);
     if (!ImGui::Begin("Settings", &show_settings, ImGuiWindowFlags_NoDocking)) {
         if (!show_settings)
             discard_settings_draft();
@@ -412,10 +413,11 @@ void App::settings() {
         entries.emplace_back(entry, true);
     for (const auto &entry : tool_config_entries)
         entries.emplace_back(entry);
-    initialize_settings_draft(entries);
-
     static char search[128] = {};
     static std::string selected_category = "UI/General";
+    if (!settings_draft_active)
+        search[0] = '\0';
+    initialize_settings_draft(entries);
 
     std::map<std::string, std::vector<std::string>> children;
     std::vector<std::string> top_levels;
@@ -460,116 +462,157 @@ void App::settings() {
             selected_category = *leaves.begin();
     }
 
-    ImGui::InputTextWithHint("##settings-search", "Search...", search, sizeof(search));
+    ImGui::SetNextItemWidth(-FLT_MIN);
+    ImGui::InputTextWithHint("##settings-search", "Filter settings", search, sizeof(search));
+    const bool filtering = search[0] != '\0';
+    const float footer = ImGui::GetFrameHeightWithSpacing() + ImGui::GetStyle().ItemSpacing.y;
+    auto entry_matches = [&](const SettingsEntry &entry) {
+        return matches(entry.label, search) || matches(entry.name, search) ||
+               matches(entry.description, search) || matches(entry.category, search);
+    };
+    auto category_matches = [&](const std::string &category) {
+        if (matches(category, search)) return true;
+        if (category == "UI/Layout") return matches("Workspace layout Import Export Reset", search);
+        if (category == "Plugins") {
+            for (const auto &handler : project_text_formats)
+                if (matches(handler->label, search) || matches(handler->extension, search) ||
+                    matches(handler->plugin_id, search)) return true;
+        }
+        return std::any_of(entries.begin(), entries.end(), [&](const auto &entry) {
+            return entry.category == category && entry_matches(entry);
+        });
+    };
 
-    ImGui::BeginChild("settings-sidebar", ImVec2(220.0f, -ImGui::GetFrameHeightWithSpacing() - 8.0f));
+    ImGui::BeginChild("settings-sidebar", ImVec2(180.0f, -footer));
     for (const auto &top : top_levels) {
         const auto it = children.find(top);
         if (it == children.end()) {
+            if (filtering && !category_matches(top)) continue;
             if (ImGui::Selectable(top.c_str(), selected_category == top))
                 selected_category = top;
         } else {
-            bool open = ImGui::TreeNodeEx(top.c_str(),
-                                          ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth);
-            if (open) {
-                ImGui::Indent();
-                for (const auto &sub : it->second) {
-                    const std::string path = top + "/" + sub;
-                    if (ImGui::Selectable(sub.c_str(), selected_category == path))
-                        selected_category = path;
-                }
-                ImGui::Unindent();
-                ImGui::TreePop();
+            bool visible = false;
+            for (const auto &sub : it->second)
+                visible |= !filtering || category_matches(top + "/" + sub);
+            if (!visible) continue;
+            ImGui::TextDisabled("%s", top.c_str());
+            for (const auto &sub : it->second) {
+                const std::string path = top + "/" + sub;
+                if (filtering && !category_matches(path)) continue;
+                if (ImGui::Selectable(sub.c_str(), selected_category == path))
+                    selected_category = path;
             }
         }
     }
     ImGui::EndChild();
 
     ImGui::SameLine();
-    ImGui::BeginChild("settings-content", ImVec2(0.0f, -ImGui::GetFrameHeightWithSpacing() - 8.0f));
-    if (!selected_category.empty()) {
-        if (selected_category == "Plugins") {
-            if (project_text_formats.empty()) {
-                ImGui::TextDisabled("No text formats");
-            } else {
+    ImGui::BeginChild("settings-content", ImVec2(0.0f, -footer));
+    bool any = false;
+    bool open_reset_layout = false;
+    for (const auto &category : leaves) {
+        if (!filtering && category != selected_category) continue;
+        if (filtering && !category_matches(category)) continue;
+        if (filtering) ImGui::TextDisabled("%s", category.c_str());
+        ImGui::PushID(category.c_str());
+        if (ImGui::BeginTable("fields", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV)) {
+            ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthStretch, 1.0f);
+            ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, 1.0f);
+            auto row = [&](const char *label, const char *description = nullptr) {
+                any = true;
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted(label);
+                if (description && has_tooltip(description) && ImGui::IsItemHovered())
+                    ImGui::SetTooltip("%s", description);
+                ImGui::TableNextColumn();
+            };
+            if (category == "UI/Layout" && (!filtering || matches(category, search) ||
+                matches("Workspace layout Import Export Reset", search))) {
+                row("Workspace layout");
+                const bool layout_busy = layout_dialog_pending || layout_file_operation.valid() ||
+                                         layout_import_step != 0;
+                ImGui::BeginDisabled(layout_busy);
+                if (ImGui::Button("Import")) import_layout_dialog();
+                ImGui::SameLine();
+                if (ImGui::Button("Export")) export_layout_dialog();
+                ImGui::SameLine();
+                if (ImGui::Button("Reset")) open_reset_layout = true;
+                ImGui::EndDisabled();
+            }
+            if (category == "Plugins") {
+                if (project_text_formats.empty() && !filtering) {
+                    row("Text formats");
+                    ImGui::TextDisabled("No text formats");
+                }
                 for (const auto &handler : project_text_formats) {
-                    std::string label = handler->label + " (*." + handler->extension + ")##" +
-                                        handler->plugin_id + "." + handler->extension;
-                    if (ImGui::Checkbox(label.c_str(), &handler->enabled)) {
+                    if (filtering && !matches(category, search) && !matches(handler->label, search) &&
+                        !matches(handler->extension, search) && !matches(handler->plugin_id, search)) continue;
+                    const std::string label = handler->label + " (*." + handler->extension + ")";
+                    row(label.c_str(), handler->plugin_id.c_str());
+                    ImGui::PushID(handler.get());
+                    if (ImGui::Checkbox("##enabled", &handler->enabled)) {
                         controller.config_set("plugin.text_format." + handler->plugin_id + "." +
-                                                  handler->extension,
-                                              handler->enabled ? "1" : "0");
+                                              handler->extension, handler->enabled ? "1" : "0");
                         save_config();
                     }
-                    if (!handler->plugin_id.empty() && ImGui::IsItemHovered())
-                        ImGui::SetTooltip("Comes from %s", handler->plugin_id.c_str());
+                    ImGui::PopID();
                 }
             }
-        }
-        bool any_entry = false;
-        if (selected_category == "UI/Layout") {
-            any_entry = true;
-            ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Workspace layout:");
-            ImGui::SameLine();
-            const bool layout_busy = layout_dialog_pending || layout_file_operation.valid() ||
-                                     layout_import_step != 0;
-            ImGui::BeginDisabled(layout_busy);
-            if (ImGui::Button("Import##workspace-layout"))
-                import_layout_dialog();
-            ImGui::SameLine();
-            if (ImGui::Button("Export##workspace-layout"))
-                export_layout_dialog();
-            ImGui::SameLine();
-            if (ImGui::Button("Reset##workspace-layout"))
-                ImGui::OpenPopup("Reset workspace layout?");
-            ImGui::EndDisabled();
-            if (ImGui::BeginPopupModal("Reset workspace layout?", nullptr,
-                                       ImGuiWindowFlags_AlwaysAutoResize)) {
-                ImGui::TextUnformatted("Reset the workspace layout to its default?");
-                if (ImGui::Button("Reset")) {
-                    reset_layout();
-                    ImGui::CloseCurrentPopup();
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Cancel"))
-                    ImGui::CloseCurrentPopup();
-                ImGui::EndPopup();
+            for (const auto &entry : entries) {
+                if (entry.category != category || (filtering && !entry_matches(entry))) continue;
+                const std::string label = entry.label.empty() ? entry.name : entry.label;
+                row(label.c_str(), entry.description.c_str());
+                ImGui::PushID(entry.name.c_str());
+                if (render_entry(this, entry)) settings_dirty = true;
+                ImGui::PopID();
             }
+            ImGui::EndTable();
         }
-        for (const auto &entry : entries) {
-            if (entry.category != selected_category)
-                continue;
-            any_entry = true;
-            if (render_entry(this, entry, search))
-                settings_dirty = true;
-            ImGui::Spacing();
-        }
-        if (!any_entry)
-            ImGui::TextDisabled("No settings in this group.");
+        ImGui::PopID();
     }
+    if (!any) ImGui::TextDisabled(filtering ? "No matching settings." : "No settings in this group.");
+    ImGui::PushID("UI/Layout");
+    if (open_reset_layout) ImGui::OpenPopup("Reset workspace layout?");
+    if (ImGui::BeginPopupModal("Reset workspace layout?", nullptr,
+                               ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::TextUnformatted("Reset the workspace layout to its default?");
+        if (ImGui::Button("Reset")) {
+            reset_layout();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel")) ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+    ImGui::PopID();
     ImGui::EndChild();
 
-    ImGui::Separator();
     bool close_settings = false;
-    if (ImGui::Button("OK")) {
-        if (apply_settings_draft(entries)) {
-            show_settings = false;
-            close_settings = true;
-        }
+    if (settings_dirty) {
+        ImGui::TextDisabled("Unapplied changes");
+        ImGui::SameLine();
     }
-    ImGui::SameLine();
-    if (ImGui::Button("Cancel")) {
+    ImGui::SetCursorPosX(std::max(ImGui::GetCursorPosX(), ImGui::GetWindowContentRegionMax().x - 286));
+    if (ImGui::Button("Cancel", ImVec2(90, 0))) {
         discard_settings_draft();
         show_settings = false;
         close_settings = true;
     }
     ImGui::SameLine();
     ImGui::BeginDisabled(!settings_dirty);
-    if (ImGui::Button("Apply")) {
+    if (ImGui::Button("Apply", ImVec2(90, 0))) {
         (void)apply_settings_draft(entries);
     }
     ImGui::EndDisabled();
+    ImGui::SameLine();
+    if (ImGui::Button("OK", ImVec2(90, 0))) {
+        if (apply_settings_draft(entries)) {
+            show_settings = false;
+            close_settings = true;
+        }
+    }
 
     ImGui::End();
     if (!show_settings && !close_settings)

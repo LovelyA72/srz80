@@ -85,8 +85,8 @@ void App::project_settings() {
                 ImGui::TextUnformatted(title.c_str());
                 bool edited = false;
                 if (ImGui::BeginTable("input-fields", 2, ImGuiTableFlags_BordersInnerV)) {
-                    ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 110);
-                    ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+                    ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthStretch, 1.0f);
+                    ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, 1.0f);
                     auto field = [&](const char *label) {
                         ImGui::TableNextRow(); ImGui::TableNextColumn(); ImGui::AlignTextToFramePadding();
                         ImGui::TextUnformatted(label); ImGui::TableNextColumn(); ImGui::SetNextItemWidth(-FLT_MIN);
@@ -132,8 +132,8 @@ void App::project_settings() {
         }
         ImGui::PushID(category);
         if (ImGui::BeginTable("fields", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV)) {
-            ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 140);
-            ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthStretch, 1.0f);
+            ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, 1.0f);
             auto row = [&](const char *label, const char *search) {
                 if (filtering && !project_settings_filter.PassFilter(search)) return false;
                 any = true;
