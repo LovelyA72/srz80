@@ -231,7 +231,7 @@ impl Core {
             if !self.event_eligible(&event, Some(clock)) {
                 continue;
             }
-            // Safety: eligibility is checked immediately before invocation;
+            // Safety: eligibility is checked immediately before invocation.
             // the frame retains the owning card until dispatch unwinds.
             let status = unsafe { (event.callback)(event.context) };
             if status != SRH_OK && status != SRH_STOP {

@@ -857,7 +857,7 @@ fn a_full_trace_ring_reports_its_capacity() {
     assert_eq!(BILLION, 1_000_000_000);
 }
 
-/// Reads `table[offset % 8]`; the mapping context points at an 8-byte table.
+/// Reads `table[offset % 8]`. The mapping context points at an 8-byte table.
 unsafe extern "C" fn table_read(
     context: *mut core::ffi::c_void,
     offset: u64,
@@ -1223,7 +1223,7 @@ fn a_data_provider_publishes_a_snapshot_and_gates_live_configuration() {
     bad_flags = provider(SRH_PROVIDER_LIVE_CONFIG);
     assert_eq!(core.register_provider(other, &bad_flags), SRH_OK);
 
-    // Configuring a stopped rack is fine; configuring a running one needs the
+    // Configuring a stopped rack is fine. Configuring a running one needs the
     // live-configuration capability, which only the second provider advertises.
     assert_eq!(
         core.provider_command(card, SRH_PROVIDER_CONFIGURE, 3, "{}"),

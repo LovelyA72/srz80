@@ -3,7 +3,7 @@
 #include <cstdint>
 
 namespace srz80::ui {
-// Wall time still owed to this rack. Short execution slices preserve debt;
+// Wall time still owed to this rack. Short execution slices preserve debt.
 // prolonged overload is bounded so commands and live edits remain responsive.
 class SimulationPacing {
   public:

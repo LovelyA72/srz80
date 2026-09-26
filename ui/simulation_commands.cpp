@@ -550,7 +550,7 @@ void SimulationController::execute(const LegacyCommand &command, Reply &reply) {
 
 void SimulationController::invalidate(const LegacyCommand &command, const Reply &reply) {
     // Apply publication policy once, after the complete command boundary.
-    // Read-only requests don't force copies; mixer/clock changes need control
+    // Read-only requests don't force copies. Mixer/clock changes need control
     // data only. Lifecycle and memory changes also invalidate video.
     switch (command.kind) {
     case CmdKind::Stop: case CmdKind::Reset: case CmdKind::Step:

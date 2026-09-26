@@ -229,7 +229,7 @@ impl Core {
         value: &mut u8,
         peek: bool,
     ) -> SrhStatus {
-        // Copy only bus policy; cloning Space also allocates its name per read.
+        // Copy only bus policy. Cloning Space also allocates its name per read.
         let (resolver, random, fallback) = {
             let spaces = self.spaces.borrow();
             let entry = &spaces[&space];

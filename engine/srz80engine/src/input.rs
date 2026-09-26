@@ -1,7 +1,7 @@
 //! Deterministic byte-input queues.
 //!
 //! An endpoint is a named, bounded FIFO owned by the host.  Records are kept
-//! sorted by `(time, injection sequence)`; a due-record transition schedules a
+//! sorted by `(time, injection sequence)`. A due-record transition schedules a
 //! single wakeup so a card can be notified without polling, and cancelling the
 //! subscription or reaching the records cancels that wakeup exactly.
 

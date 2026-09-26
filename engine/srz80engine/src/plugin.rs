@@ -25,7 +25,7 @@ impl Library {
         let module = unsafe { libloading::Library::new(path) }
             .map_err(|error| format!("Cannot load plugin {}: {error}", path_text(path)))?;
         let init: SrhPluginInit = unsafe {
-            // Safety: the symbol is copied out as a plain function pointer; the
+            // Safety: the symbol is copied out as a plain function pointer. The
             // module stays loaded for as long as `init` is reachable.
             match module.get::<SrhPluginInit>(b"srz80_plugin_init\0") {
                 Ok(symbol) => *symbol,

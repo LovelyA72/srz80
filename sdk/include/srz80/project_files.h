@@ -22,11 +22,11 @@ typedef struct SrhHostProjectFilesV1 {
     /* UTF-8 absolute path, including trailing NUL. NULL buffer queries size.
        Too-small buffers return SRH_INVALID and update *size. */
     SrhStatus(SRH_CALL *project_root)(void *context, SrhHandle owner, char *buffer, uint64_t *size);
-    /* Raw file bytes; NULL buffer queries size. Too-small buffers return
+    /* Raw file bytes. NULL buffer queries size. Too-small buffers return
        SRH_INVALID and update *size. Zero-length files need no buffer. */
     SrhStatus(SRH_CALL *read_file)(void *context, SrhHandle owner, const char *relative_path,
                                    uint8_t *buffer, uint64_t *size);
-    /* Atomic replacement in the target directory; size may be zero with NULL data. */
+    /* Atomic replacement in the target directory. Size may be zero with NULL data. */
     SrhStatus(SRH_CALL *write_file)(void *context, SrhHandle owner, const char *relative_path,
                                     const uint8_t *data, uint64_t size);
 } SrhHostProjectFilesV1;

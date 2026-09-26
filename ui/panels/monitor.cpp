@@ -46,7 +46,7 @@ void App::monitor() {
             ImGui::TableSetupColumn(name);
         ImGui::TableHeadersRow();
         // The clipper needs one item for every table row.  Instruction
-        // separators add rows, so clip a row map rather than the trace list;
+        // separators add rows, so clip a row map rather than the trace list.
         // otherwise its calculated range jumps as separator rows enter and
         // leave view (most visible with a write-only filter).
         ImGuiListClipper clip;

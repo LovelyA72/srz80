@@ -1004,7 +1004,7 @@ impl Default for SrhMapping {
 }
 
 impl SrhMapping {
-    /// A zeroed body; the header fields are then filled by `Default`.
+    /// A zeroed body. The header fields are then filled by `Default`.
     const fn zeroed() -> SrhMapping {
         SrhMapping {
             abi_version: 0,

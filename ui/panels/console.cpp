@@ -149,7 +149,7 @@ void App::console() {
     ImGui::BeginChild("transcript", ImVec2(0, 0), true);
     if (console_autoscroll) {
         // A deliberate scroll gesture means the user wants to read away from
-        // the tail; stop following so autoscroll does not fight the input.
+        // the tail. Stop following so autoscroll does not fight the input.
         ImGuiWindow *transcript = ImGui::GetCurrentWindow();
         const bool scrollbar_held =
             ImGui::GetActiveID() == ImGui::GetWindowScrollbarID(transcript, ImGuiAxis_Y);

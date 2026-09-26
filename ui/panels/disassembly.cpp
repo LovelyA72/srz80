@@ -375,7 +375,7 @@ void App::disassembly() {
         ImGui::PopStyleColor(3);
         // Hit-test the exact, non-overlapping row rect. Selectable() pads its box by
         // half the item spacing, which makes neighbouring rows overlap so two rows can
-        // report hover at a shared boundary; testing row_min..row_max keeps it single.
+        // report hover at a shared boundary. Testing row_min..row_max keeps it single.
         const bool row_hovered = ImGui::IsMouseHoveringRect(row_min, row_max) && !io.WantTextInput;
 
         if (row_hovered) {

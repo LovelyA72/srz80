@@ -11,7 +11,7 @@
 //! The interior-mutability fields are exactly the ones reachable from a card:
 //! the card registry, routes, events, signals, inputs, video, audio, config
 //! entries and providers.  A borrow of any of them is always released before a
-//! plugin function is invoked; the code below copies the small amount of
+//! plugin function is invoked. The code below copies the small amount of
 //! dispatch state it needs out of the container first.
 
 use core::cell::{Cell, OnceCell, RefCell};
@@ -343,7 +343,7 @@ impl Core {
     /// Installs a card with no plugin behind it, for tests that need a live
     /// owner handle without loading a shared library.
     ///
-    /// The card never receives a callback, so it needs no host table; it exists
+    /// The card never receives a callback, so it needs no host table. It exists
     /// to exercise handle lifetime, signal ownership, breakpoint association and
     /// rack ordering.
     #[cfg(test)]
@@ -1055,7 +1055,7 @@ pub fn active_core_ref<'a>() -> Option<&'a Core> {
     }
 }
 
-/// Copies a NUL-terminated C string; `None` becomes the empty string.
+/// Copies a NUL-terminated C string. `None` becomes the empty string.
 ///
 /// # Safety
 /// `pointer` must be null or point to a NUL-terminated string that stays valid

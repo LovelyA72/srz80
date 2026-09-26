@@ -36,7 +36,7 @@ void App::save_project_as_dialog(uint64_t operation) {
                                                       : project_session.path().parent_path().parent_path();
     const auto default_path = parent / "New project";
     file_dialog_state->pending_dialogs.fetch_add(1, std::memory_order_release);
-    // The picker supplies a new folder name; persistence publishes its manifest.
+    // The picker supplies a new folder name. Persistence publishes its manifest.
     SDL_ShowSaveFileDialog(&App::file_dialog_callback, request, window, nullptr, 0,
                            default_path.string().c_str());
 }

@@ -72,7 +72,7 @@ SrhStatus engine_config_entry(const SrzEngine *engine, const std::string &key, s
 
 namespace {
 // The worker's run slice keeps a stalled callback from consuming the frame
-// cadence; the engine measures this budget internally so no wall-clock value
+// cadence. The engine measures this budget internally so no wall-clock value
 // crosses the ABI.
 constexpr uint64_t slice_wall_budget_ns = 2000000; // 2 ms
 
@@ -540,7 +540,7 @@ void SimulationController::thread_main() {
         finish_command(command, std::move(reply));
     }
     // The result arena only borrows the engine for its thread assertion, so it
-    // is released first; both handles die on the thread that created them.
+    // is released first. Both handles die on the thread that created them.
     if (engine_ && result_) {
         srz80_engine_result_destroy(engine_, result_);
         result_ = nullptr;

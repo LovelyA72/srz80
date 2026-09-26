@@ -34,7 +34,7 @@ template <class T> T get(const uint8_t *in) {
     return std::bit_cast<T>(bits);
 }
 
-// FNV-1a detects accidental corruption; this is not an authentication code.
+// FNV-1a detects accidental corruption. This is not an authentication code.
 inline uint32_t checksum(std::span<const uint8_t> bytes) {
     uint32_t hash = 2166136261u;
     for (uint8_t byte : bytes)

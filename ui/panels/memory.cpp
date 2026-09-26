@@ -110,7 +110,7 @@ void App::memory() {
         return;
     }
     const auto previous_space = space;
-    // Keep the inspector's navigation controls on one compact row; the byte
+    // Keep the inspector's navigation controls on one compact row. The byte
     // table should remain the dominant part of this panel.
     ImGui::SetNextItemWidth(170.0f);
     select_space("##memory_space");

@@ -35,7 +35,7 @@ extern "C" {
  *
  * All byte slices are UTF-8 unless documented otherwise.  No C++ type, STL
  * container, exception, Rust type or Rust allocation crosses this boundary.
- * Failures are reported as SrhStatus; srz80_engine_last_error returns the
+ * Failures are reported as SrhStatus. srz80_engine_last_error returns the
  * message for the most recent failing call on the engine's thread.
  */
 
@@ -220,7 +220,7 @@ typedef struct SrzAudioSource {
     uint32_t volume_percent;
     uint32_t muted;
     uint32_t active;
-    /* Peak after source gain, pan and mute, before summing; S16 full scale is 32768. */
+    /* Peak after source gain, pan and mute, before summing. S16 full scale is 32768. */
     uint32_t level_peak;
 } SrzAudioSource;
 
@@ -627,7 +627,7 @@ SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_subscribe_input_due(SrzEngine *engine
                                                                void *context, SrhHandle *result);
 SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_enqueue_input(SrzEngine *engine, SrzSlice endpoint,
                                                          uint64_t timestamp, uint8_t value);
-/* `source` is an opaque tool-owned cancellation identity; `expected_owner`
+/* `source` is an opaque tool-owned cancellation identity. `expected_owner`
    rejects the batch when the endpoint changed owner. */
 SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_enqueue_input_batch(SrzEngine *engine,
                                                                SrzSlice endpoint,
@@ -664,7 +664,7 @@ SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_text_endpoints(const SrzEngine *engin
                                                           SrzResult *result);
 SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_video_surfaces(const SrzEngine *engine,
                                                           SrzResult *result);
-/* Caller-owned RGBA8 copy; `size` carries capacity in and copied bytes out. */
+/* Caller-owned RGBA8 copy. `size` carries capacity in and copied bytes out. */
 SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_video_read(SrzEngine *engine, SrhHandle surface,
                                                       uint64_t offset, uint8_t *buffer,
                                                       uint32_t *size, uint32_t *total);
@@ -706,7 +706,7 @@ SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_audio_register_source(SrzEngine *engi
                                                                  void *render_context,
                                                                  SrhHandle *source);
 /* Drains up to `frames` interleaved S16 stereo frames from the bounded queue. */
-/* Capture frontend bridge; engine-thread only. A zero format clears capture.
+/* Capture frontend bridge. Engine-thread only. A zero format clears capture.
    push copies at most 8192 frames; samples must contain frames * channels floats. */
 SRZ_EXPORT uint32_t SRZ_CALL srz80_engine_audio_input_requested(SrzEngine *engine);
 SRZ_EXPORT void SRZ_CALL srz80_engine_audio_input_push(SrzEngine *engine,
@@ -730,7 +730,7 @@ SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_audio_set_source_muted(SrzEngine *eng
                                                                   SrhHandle source,
                                                                   uint32_t muted);
 SRZ_EXPORT uint32_t SRZ_CALL srz80_engine_audio_master_volume(const SrzEngine *engine);
-/* Peaks in the final stereo PCM since the previous query; querying clears them. */
+/* Peaks in the final stereo PCM since the previous query. Querying clears them. */
 SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_audio_master_levels(const SrzEngine *engine,
                                                                uint32_t *left, uint32_t *right);
 SRZ_EXPORT void SRZ_CALL srz80_engine_audio_set_master_volume(SrzEngine *engine, uint32_t percent);
@@ -758,7 +758,7 @@ SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_load_config(SrzEngine *engine);
 SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_save_config(const SrzEngine *engine);
 SRZ_EXPORT uint64_t SRZ_CALL srz80_engine_config_path(const SrzEngine *engine, char *buffer,
                                                       uint64_t capacity);
-/* Reads one key; `fallback` is used when the key is absent. */
+/* Reads one key. `fallback` is used when the key is absent. */
 SRZ_EXPORT uint64_t SRZ_CALL srz80_engine_config_value(const SrzEngine *engine, SrzSlice key,
                                                        SrzSlice fallback, char *buffer,
                                                        uint64_t capacity);

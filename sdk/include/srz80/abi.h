@@ -151,10 +151,10 @@ typedef struct SrhHostDebugV1 {
     SrhBoundaryEx boundary_ex;
     SrhRequestStop request_stop;
     SrhSetTraceKind set_trace_kind;
-    /* Appended in SRH_ABI 1; use only after checking struct_size. */
+    /* Appended in SRH_ABI 1. Use only after checking struct_size. */
     SrhDebugFlag trace_enabled;
     SrhDebugFlag boundary_required;
-    /* Live per-card switch. Message is copied by the host; NULL clears it.
+    /* Live per-card switch. Message is copied by the host. NULL clears it.
        Defaults to enabled. Use only after checking struct_size. */
     SrhStatus(SRH_CALL *set_disassembly_enabled)(void *, SrhHandle, uint32_t, const char *);
 } SrhHostDebugV1;
@@ -180,7 +180,7 @@ typedef struct SrhHostInputV1 {
     SrhInputRegister register_input;
     SrhInputDue input_due;
     SrhInputPop input_pop;
-    /* Optional ABI-1 tail. One subscriber per endpoint; cancel with host.cancel.
+    /* Optional ABI-1 tail. One subscriber per endpoint. Cancel with host.cancel.
        Callback runs at a scheduler boundary, once per empty-to-due transition. */
     SrhStatus(SRH_CALL *subscribe_due)(void *, SrhHandle, SrhHandle, SrhCallback,
                                       void *, SrhHandle *);
@@ -234,7 +234,7 @@ typedef struct SrhHostVideoV1 {
     SrhStatus(SRH_CALL *set_video_timing)(void *, SrhHandle, SrhVideoTimingQuery, void *);
 } SrhHostVideoV1;
 
-/* Host audio source registration. Each source declares its native sample rate;
+/* Host audio source registration. Each source declares its native sample rate.
    the host resamples it to sample_rate before mixing. Audio callbacks are
    invoked by the host's simulation thread, never by a device callback.
    start_frame and frames use the source's native-rate timeline. The interleaved

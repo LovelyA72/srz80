@@ -16,7 +16,7 @@ impl Core {
         if !self.alive(owner) || provider.is_null() {
             return SRH_INVALID;
         }
-        // Safety: the caller supplied a provider record; the header and the
+        // Safety: the caller supplied a provider record. The header and the
         // required tail fields are checked before any field is read.
         let source = unsafe { &*provider };
         if source.abi_version != SRH_ABI
@@ -135,7 +135,7 @@ impl Core {
         self.enter_frame();
         let mut text: Vec<u8> = payload.as_bytes().to_vec();
         text.push(0);
-        // Safety: the provider owner is alive and registered this callback; the
+        // Safety: the provider owner is alive and registered this callback. The
         // payload buffer outlives the call.
         let status = unsafe {
             match provider.command {
@@ -155,7 +155,7 @@ impl Core {
 }
 
 /// A fixed-size `char[N]` metadata field must hold a complete NUL-terminated
-/// string; a missing terminator means the supplier was not a valid record.
+/// string. A missing terminator means the supplier was not a valid record.
 fn cstring_complete(field: &[core::ffi::c_char]) -> bool {
     if field.is_empty() || field[0] == 0 {
         return false;

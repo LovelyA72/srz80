@@ -8,7 +8,7 @@
 //!
 //! Layout:
 //!
-//! - [`ffi`] declares the C ABI structures and constants; `layout_tests`
+//! - [`ffi`] declares the C ABI structures and constants. `layout_tests`
 //!   asserts every size and guarded tail offset against the C headers.
 //! - [`core`] owns the engine state and the deferred collection rules.
 //! - [`host`] builds the callback tables a card plugin receives.

@@ -6,7 +6,7 @@
 
 namespace srz80::ui {
 // GUI-owned request ledger. Released but unresolved requests still count toward
-// backpressure; a released future is never interpreted as worker cancellation.
+// backpressure. A released future is never interpreted as worker cancellation.
 class ToolInputs {
     struct Request {
         void *client;

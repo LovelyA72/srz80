@@ -6,7 +6,7 @@
 //! failure can never unwind into C++ card code.
 //!
 //! The `ShouryoHost` declaration order and the extension IDs are part of the
-//! card ABI; `SRH_HEADER`/`SRH_INIT` equivalents are reproduced field for
+//! card ABI. `SRH_HEADER`/`SRH_INIT` equivalents are reproduced field for
 //! field by `crate::ffi`.  Every callback is an `unsafe extern "C" fn` because
 //! that is the pointer type the C headers declare.
 
@@ -411,7 +411,7 @@ unsafe extern "C" fn host_log(
     message: *const c_char,
 ) -> SrhStatus {
     guarded(std::ptr::null_mut(), || {
-        // Safety: the engine owns `context`; the plugin borrowed the string
+        // Safety: the engine owns `context`. The plugin borrowed the string
         // only for this call.
         let Some(core) = (unsafe { core_from_host(context) }) else {
             return SRH_INVALID;
@@ -443,7 +443,7 @@ unsafe extern "C" fn host_map(
         if mapping.is_null() {
             return SRH_INVALID;
         }
-        // Safety: the plugin supplies one of its own mapping records; the
+        // Safety: the plugin supplies one of its own mapping records. The
         // header check keeps an older layout from being read as a newer one.
         if !valid(mapping, size_of::<SrhMapping>()) {
             return SRH_INVALID;
@@ -687,7 +687,7 @@ unsafe extern "C" fn host_query(
         return SRH_INVALID;
     }
     let name = unsafe { crate::core::cstr(id) };
-    // The extension tables live with the core that owns this context; their
+    // The extension tables live with the core that owns this context. Their
     // addresses stay stable for the engine lifetime.
     let pointer = match core.host_tables() {
         Some(tables) => tables.find(&name),

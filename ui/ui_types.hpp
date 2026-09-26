@@ -151,7 +151,7 @@ struct UiAudioSourceInfo {
     uint32_t level_peak = 0;
 };
 
-// Opaque card payload.  The host transports it; only a matching tool
+// Opaque card payload.  The host transports it. Only a matching tool
 // interprets its schema.
 struct UiProviderData {
     std::string name;

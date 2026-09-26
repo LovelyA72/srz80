@@ -5,7 +5,7 @@
 namespace srz80::ui {
 namespace {
 // Keep existing LF/CRLF endings outside the edited range. New lines use the
-// document's first newline style; merely editing a mixed-ending file must not
+// document's first newline style. Merely editing a mixed-ending file must not
 // rewrite all of its other lines.
 std::string restore_line_endings(std::string_view before, const std::string &after) {
     std::string normalized;

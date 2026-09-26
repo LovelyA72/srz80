@@ -143,7 +143,7 @@ void SDLCALL AudioBackend::supply_audio(void *context, SDL_AudioStream *stream,
                                       int additional_bytes, int total_bytes) {
     auto &self = *static_cast<AudioBackend *>(context);
     // SDL holds the stream lock. This callback touches only the thread-safe
-    // PCM queue; engine, card, tool and ImGui code remain on their own threads.
+    // PCM queue. Engine, card, tool and ImGui code remain on their own threads.
     const auto epoch = self.controller_->audio_epoch();
     if (self.pcm_epoch_ != epoch) {
         SDL_ClearAudioStream(stream);
@@ -254,7 +254,7 @@ void AudioBackend::update_input() {
     if (input_error_.empty()) {
         input_physical_ = physical;
         // Open native format first. WASAPI shared-mode devices need not support
-        // our requested channel count/rate; SDL's stream performs conversion.
+        // our requested channel count/rate. SDL's stream performs conversion.
         input_device_ = SDL_OpenAudioDevice(physical, nullptr);
         if (input_device_) {
             SDL_PauseAudioDevice(input_device_);

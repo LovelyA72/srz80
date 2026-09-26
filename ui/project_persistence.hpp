@@ -13,9 +13,9 @@ struct ProjectSaveDestination {
     bool create_workspace = false;
 };
 std::string project_display_name(const nlohmann::json &document, const std::filesystem::path &file);
-// Startup-only metadata read; rendering uses cached recent-project names.
+// Startup-only metadata read. Rendering uses cached recent-project names.
 std::string read_project_name(const std::filesystem::path &file);
-// A new destination is a folder; ordinary Save passes the current manifest path.
+// A new destination is a folder. Ordinary Save passes the current manifest path.
 ProjectSaveDestination project_save_destination(const std::filesystem::path &old_file,
                                                 const std::filesystem::path &requested);
 nlohmann::json project_with_absolute_assets(nlohmann::json document,

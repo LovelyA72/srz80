@@ -1,7 +1,7 @@
 //! Plugin-owned project data.
 //!
 //! A card may store an opaque chunk in the project file.  The engine hex-encodes
-//! the bytes for the JSON container and never interprets them; the owning card
+//! the bytes for the JSON container and never interprets them. The owning card
 //! validates and versions its own payload.
 
 use crate::core::{Core, Handle};

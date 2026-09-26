@@ -100,7 +100,7 @@ void App::project_settings() {
                         };
                         if (owner && std::none_of(devices.begin(), devices.end(), [&](const auto &d) {
                             return d.owner == owner && compatible(d);
-                        })) preview += " — unavailable";
+                        })) preview += " (unavailable)";
                         if (ImGui::BeginCombo((std::string("##") + label).c_str(), preview.c_str())) {
                             if (ImGui::Selectable("None", key.empty())) { key.clear(); edited = true; }
                             for (const auto &device : devices) {

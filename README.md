@@ -11,6 +11,7 @@ for captures and automated checks.
 
 These days, SRZ80 is my playground for all sorts of wonky, unhinged computer
 experiments, retro or otherwise. 
+<img height="400px" alt="image" src="https://github.com/user-attachments/assets/769c2f0f-24c0-47b4-8f21-a7f1e8bc703b" />
 
 This repo has the host's source code:
 
@@ -42,10 +43,15 @@ nets, cards, mappings, and clocks. The engine takes care of:
 - deterministic 16-bit stereo mixing at 44.1 kHz; and
 - plugin-owned RGBA8 video surfaces.
 
+
 Plugins implement the hardware. Existing cards include Z80, 65C816, and RISC-V
 CPUs; RAM, ROM, and MMU memory; text and V9938 video; several sound chips; and
 storage and I/O devices. Those implementations and their third-party emulation
 cores are kept outside this host repository.
+
+<img height="400px" alt="image" src="https://github.com/user-attachments/assets/e72e9056-b6d1-41ec-884c-6663b284b693" />
+
+<img height="300px" alt="image" src="https://github.com/user-attachments/assets/2780e06e-1002-4d8c-a435-3480812d57a4" />
 
 ## AI Usage
 

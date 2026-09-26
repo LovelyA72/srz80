@@ -1,7 +1,7 @@
 //! The engine handle and the exported engine ABI.
 //!
 //! Every export validates its inputs and reports ordinary failures through a
-//! status plus `srz80_engine_last_error`. Diagnostic builds contain panics;
+//! status plus `srz80_engine_last_error`. Diagnostic builds contain panics.
 //! shipping builds abort on one, so it cannot unwind through the ABI. Engine
 //! instances are single-threaded: one handle belongs to the thread that
 //! created it and every card it loads is driven from that thread.
@@ -17,7 +17,7 @@ use crate::result::ResultArena;
 
 /// One engine instance: the rack plus the host configuration that outlives it.
 pub struct EngineHandle {
-    /// Owned boxed core; null for a candidate that has not loaded anything yet.
+    /// Owned boxed core. Null for a candidate that has not loaded anything yet.
     pub core: *mut Core,
     pub plugins: PathBuf,
     pub last_error: RefCell<String>,
@@ -39,7 +39,7 @@ impl EngineHandle {
     }
 
     fn config_snapshot(&self) -> crate::config::Config {
-        // The snapshot owns values only; no active-card callbacks cross racks.
+        // The snapshot owns values only. No active-card callbacks cross racks.
         unsafe { self.core() }
             .map(|core| core.config.borrow().clone())
             .unwrap_or_else(|| self.initial_config.clone())
@@ -273,7 +273,7 @@ pub extern "C" fn srz80_engine_replace(
         candidate_ref.core = retired;
         engine_ref.plugins = candidate_ref.plugins.clone();
         engine_ref.audio_sample_rate = candidate_ref.audio_sample_rate;
-        // Safety: the caller handed the candidate over; releasing it here
+        // Safety: the caller handed the candidate over. Releasing it here
         // matches the C++ implementation, which consumes the candidate and with
         // it the retired rack.
         unsafe { drop(Box::from_raw(candidate)) };
@@ -450,7 +450,7 @@ pub extern "C" fn srz80_engine_load_project(
     if engine.is_null() {
         return SRH_INVALID;
     }
-    // Safety: `engine` is owned by the caller's thread; the slices are borrowed
+    // Safety: `engine` is owned by the caller's thread. The slices are borrowed
     // for this call only.
     let handle = unsafe { &mut *engine };
     let path = unsafe { crate::core::slice_path(project_path) };
@@ -493,7 +493,7 @@ pub extern "C" fn srz80_engine_load_project_json(
     if engine.is_null() {
         return SRH_INVALID;
     }
-    // Safety: `engine` is owned by the caller's thread; the slices are borrowed
+    // Safety: `engine` is owned by the caller's thread. The slices are borrowed
     // for this call only.
     let handle = unsafe { &mut *engine };
     let document = unsafe { crate::core::slice_text(json) };
@@ -687,7 +687,7 @@ pub extern "C" fn srz80_engine_add_card(
     if request.is_null() || card.is_null() {
         return fail(engine, SRH_INVALID, "Invalid card request ABI".to_string());
     }
-    // Safety: the caller supplied a request record; the header is checked
+    // Safety: the caller supplied a request record. The header is checked
     // before any tail field is read.
     let request_ref = unsafe { &*request };
     if request_ref.abi_version != SRZ80_ENGINE_ABI
@@ -2783,7 +2783,7 @@ pub extern "C" fn srz80_engine_edit_property(
             "Invalid property value ABI".to_string(),
         );
     }
-    // Safety: the caller supplied a value record; its header is validated by
+    // Safety: the caller supplied a value record. Its header is validated by
     // the core before any field is used.
     let value_ref = unsafe { &*value };
     if !valid(value, core::mem::size_of::<SrhValue>()) {
@@ -2857,7 +2857,7 @@ pub extern "C" fn srz80_engine_config_value(
     if engine.is_null() {
         return store_text("", buffer, capacity);
     }
-    // Safety: `engine` is owned by the caller's thread; the slices are borrowed
+    // Safety: `engine` is owned by the caller's thread. The slices are borrowed
     // for this call only.
     let core = match unsafe { (*engine).core() } {
         Some(core) => core,
@@ -3014,7 +3014,7 @@ pub extern "C" fn srz80_engine_log(engine: *mut EngineHandle, message: SrzSlice)
     if engine.is_null() {
         return;
     }
-    // Safety: `engine` is owned by the caller's thread; the slice is borrowed
+    // Safety: `engine` is owned by the caller's thread. The slice is borrowed
     // for this call only.
     if let Some(core) = unsafe { (*engine).core() } {
         let message = unsafe { crate::core::slice_text(message) };

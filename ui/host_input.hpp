@@ -8,7 +8,7 @@
 
 namespace srz80::ui {
 // Main-thread capture and delivery owner. Each stream has one worker request
-// in flight; a failed enqueue retains its whole batch for retry.
+// in flight. A failed enqueue retains its whole batch for retry.
 class HostInput {
 public:
     struct Surface {

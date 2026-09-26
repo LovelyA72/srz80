@@ -64,7 +64,7 @@ fn bytes_slice(bytes: &[u8]) -> SrzSlice {
     }
 }
 
-/// A card request that passes the header checks; `SrzCardRequest` has no
+/// A card request that passes the header checks. `SrzCardRequest` has no
 /// `Default` because its slice fields borrow caller memory.
 fn base_request(plugins: &str, type_text: &str) -> SrzCardRequest {
     SrzCardRequest {
@@ -441,7 +441,7 @@ fn invalid_utf8_is_handled_without_unwinding() {
         buffer.as_mut_ptr(),
         buffer.len() as u64,
     );
-    // The value is either absent (0 bytes) or a NUL-terminated string; it is
+    // The value is either absent (0 bytes) or a NUL-terminated string. It is
     // never a partial write without a terminator.
     if written != 0 {
         let terminator = buffer

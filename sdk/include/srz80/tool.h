@@ -96,7 +96,7 @@ typedef struct SrhToolFileFilter {
     const char *patterns;
 } SrhToolFileFilter;
 
-/* Named input: at most 64 pending requests / 256 KiB per client; 64 KiB
+/* Named input: at most 64 pending requests / 256 KiB per client. 64 KiB
    per batch. UINT64_MAX timestamps at worker acceptance. release does not
    cancel a submitted operation. client is a stable tool-owned identity. */
 typedef struct SrhToolInputResult {
@@ -137,7 +137,7 @@ typedef struct SrhToolHostV1 {
     SrhStatus(SRH_CALL *load_memory_segments)(void *context, SrhHandle space,
         const SrhToolMemorySegment *segments, uint32_t segment_count,
         uint32_t reset_before_load, uint32_t *failed_segment, uint64_t *written);
-    /* The plugin supplies its own nonempty filter list; the host copies it
+    /* The plugin supplies its own nonempty filter list. The host copies it
        before starting the asynchronous native dialog. */
     SrhStatus(SRH_CALL *file_dialog_request)(void *context, uint32_t save,
         const SrhToolFileFilter *filters, uint32_t filter_count, SrhHandle *request);
@@ -151,7 +151,7 @@ typedef struct SrhToolHostV1 {
     SrhStatus(SRH_CALL *config_register)(void *context, const SrhConfigEntry *entry);
     SrhStatus(SRH_CALL *config_unregister)(void *context, void *entry_context);
     SrhStatus(SRH_CALL *config_get)(void *context, const char *key, char *value, uint32_t capacity);
-    /* Queues owned strings in controller order; SRH_OK is transport acceptance. */
+    /* Queues owned strings in controller order. SRH_OK is transport acceptance. */
     SrhStatus(SRH_CALL *config_set)(void *context, const char *key, const char *value);
     /* Card inspection service (appended in SRH_ABI 1, guarded by struct_size).
        Tools use these to discover active cards and inspect/edit their generic

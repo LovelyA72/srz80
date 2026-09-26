@@ -17,7 +17,7 @@
 namespace srz80::ui {
 
 // GUI-thread document owner. Runtime execution and tool callbacks stay in their
-// shell adapters. Filesystem tasks receive owned snapshots; only this owner commits results.
+// shell adapters. Filesystem tasks receive owned snapshots. Only this owner commits results.
 class ProjectSession {
   public:
     enum class DocumentState { unloaded, loaded };

@@ -86,7 +86,7 @@ void App::poll_card_types() {
         controller.log_message("[system] Card plugin discovery failed: " +
                                (reply.error.empty() ? "unknown error" : reply.error));
     }
-    // The engine read every descriptor on the simulation thread; only owned
+    // The engine read every descriptor on the simulation thread. Only owned
     // metadata and an owned failure status cross back here.
     card_types = std::move(reply.card_types);
     if (add_type >= static_cast<int>(card_types.size()))
@@ -264,7 +264,7 @@ void App::rack() {
                 snapshot->inspection->all_cards.end(), [id](const auto &card) { return card.id == id; });
             const bool invalid = runtime_card != snapshot->inspection->all_cards.end() &&
                                  !runtime_card->load_error.empty();
-            // Parked cards stay muted; an invalid one shows the neutral swatch.
+            // Parked cards stay muted. An invalid one shows the neutral swatch.
             color_swatch(invalid ? invalid_swatch : card_color, !invalid);
             ImGui::SameLine();
             if (invalid)

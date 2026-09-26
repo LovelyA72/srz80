@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
     // drag starting on that content become a request to move the whole panel.
     ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
     // The application owns ImGui persistence. The layout is loaded from the
-    // base64 "imgui" value in config.ini and refreshed only on clean exit;
+    // base64 "imgui" value in config.ini and refreshed only on clean exit.
     // standalone .ini files are used only for explicit import/export.
     ImGui::GetIO().IniFilename = nullptr;
     srz80::ui::apply_ui_theme("Dark Red");

@@ -14,7 +14,7 @@ use crate::plugin::Library;
 
 impl Core {
     /// A rack slot with no native instance or bus registrations. Placement is
-    /// independent of availability; the session retains its original document.
+    /// independent of availability. The session retains its original document.
     pub fn unavailable_card(&self, type_: String, priority: i32, error: String) -> Handle {
         const INERT: SrhPlugin = SrhPlugin {
             abi_version: SRH_ABI,
@@ -44,7 +44,7 @@ impl Core {
                 type_,
                 name: core::cell::RefCell::new(String::new()),
                 priority,
-                // Internal lifecycle placement; the public active flag also checks
+                // Internal lifecycle placement. The public active flag also checks
                 // availability. This handle never enters the live-owner set.
                 active: core::cell::Cell::new(true),
                 parked: core::cell::Cell::new(false),
@@ -620,7 +620,7 @@ impl Core {
             self.leave_frame();
             return SRH_INVALID;
         }
-        // Regular properties stay paused/stopped-only; live-debug properties
+        // Regular properties stay paused/stopped-only. Live-debug properties
         // may be changed while running so tools can interact in real time.
         if self.run_state.get() == RunState::Running
             && (property.ui_flags & SRH_PROPERTY_LIVE_EDIT) == 0
@@ -956,11 +956,11 @@ impl Core {
     // ------------------------------------------------------------------
 
     /// Registers plugin-owned setting metadata.  The engine copies the
-    /// metadata and keeps the plugin's callbacks; `context` identifies the
+    /// metadata and keeps the plugin's callbacks. `context` identifies the
     /// registration for removal.
     ///
     /// # Safety
-    /// `entry` must satisfy [`valid`]; the pointer fields inside it are read
+    /// `entry` must satisfy [`valid`]. The pointer fields inside it are read
     /// through `cstr`, and the callbacks are invoked only while the owning
     /// plugin is loaded.
     pub fn register_config_entry(&self, entry: &SrhConfigEntry) -> bool {

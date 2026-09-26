@@ -16,7 +16,7 @@ enum SrhMouseEvent {
     SRH_MOUSE_WHEEL = 4,
     SRH_MOUSE_LEAVE = 5
 };
-/* byte 0: event; byte 1: button down (otherwise zero); bytes 2..3:
+/* byte 0: event. Byte 1: button down (otherwise zero). Bytes 2..3:
    button (1 left, 2 middle, 3 right, 4 back, 5 forward); bytes 4..7: x;
    bytes 8..11: y; bytes 12..15: width; bytes 16..19: height.
    x/y: signed relative counts, absolute pixels, or signed wheel units

@@ -571,7 +571,7 @@ impl Core {
         Ok(())
     }
 
-    /// Sorted trace snapshot; the C++ engine returns records in sequence order.
+    /// Sorted trace snapshot. The C++ engine returns records in sequence order.
     pub fn trace_records(&self) -> Vec<Trace> {
         let mut result: Vec<Trace> = self.trace.borrow().iter().cloned().collect();
         result.sort_by_key(|trace| trace.sequence);

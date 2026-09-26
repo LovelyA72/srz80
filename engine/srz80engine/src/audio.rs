@@ -15,7 +15,7 @@ use std::rc::Rc;
 use crate::core::{AudioDiagnostics, AudioSourceInfo, Core, Handle, BILLION};
 use crate::ffi::*;
 
-// Preserve unity gain at center; the asymmetric endpoints both reach silence.
+// Preserve unity gain at center. The asymmetric endpoints both reach silence.
 fn pan_sample(sample: i64, pan: i32, channel: usize) -> i64 {
     match (pan, channel) {
         (1..=63, 0) => sample * (63 - pan) as i64 / 63,
@@ -53,7 +53,7 @@ impl Core {
     }
 
     /// Changes the canonical mix rate. Callers serialize this with simulation
-    /// execution; registered sources keep their declared native rates.
+    /// execution. Registered sources keep their declared native rates.
     pub fn audio_set_sample_rate(&mut self, sample_rate: u32) -> bool {
         if !(8_000..=384_000).contains(&sample_rate) {
             return false;
@@ -199,7 +199,7 @@ impl Core {
                     )
                 };
                 if status != SRH_OK {
-                    // Per-source render errors are tracked next to the source;
+                    // Per-source render errors are tracked next to the source.
                     // the aggregate lives in an interior-mutable counter.
                     source.errors.set(source.errors.get() + 1);
                     self.audio_source_errors

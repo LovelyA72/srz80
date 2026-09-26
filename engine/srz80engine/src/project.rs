@@ -2,7 +2,7 @@
 //!
 //! Loading is a fallible construction followed by installation: the whole
 //! document is validated before the new rack becomes observable. Unavailable
-//! image files and libraries produce inert slots; other failures leave the
+//! image files and libraries produce inert slots. Other failures leave the
 //! caller's engine untouched. Original project data belongs to the session.
 
 use std::path::{Path, PathBuf};
@@ -419,7 +419,7 @@ fn build_project(
                 .any(|card| !card.load_error.is_empty())
             {
                 // Missing cards cannot register endpoints. The session keeps all
-                // original input records; only available endpoints run here.
+                // original input records. Only available endpoints run here.
                 let endpoints = core.input_endpoints();
                 records.retain(|(_, endpoint, _)| endpoints.contains(endpoint));
             }

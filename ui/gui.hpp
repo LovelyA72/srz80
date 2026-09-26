@@ -38,7 +38,7 @@ struct ProjectTextFormat {
     void *context = nullptr;
     SrhToolProjectFileOpen open = nullptr;
     bool enabled = true;
-    /* The tool interprets the file itself; the host never loads it as a
+    /* The tool interprets the file itself. The host never loads it as a
        project text document. */
     bool binary = false;
     std::filesystem::path active_path;
@@ -89,7 +89,7 @@ struct SettingsEntry {
           default_value(entry.default_value), type(entry.type), simulation_owned(remote) {}
 };
 
-// Main application shell; panel rendering lives in ui/panels/.
+// Main application shell. Panel rendering lives in ui/panels/.
 class App {
   public:
     App();
@@ -532,7 +532,7 @@ class App {
     uint64_t disasm_memory_revision = UINT64_MAX;
     std::chrono::steady_clock::time_point disasm_running_refresh_at_{};
     // Address spaces smaller than this many bytes are aligned by decoding from
-    // address zero; larger spaces decode from a typed address and warn when the
+    // address zero. Larger spaces decode from a typed address and warn when the
     // requested address is not a known instruction boundary.
     uint64_t disasm_align_from_zero_limit = 64 * 1024;
     std::vector<uint64_t> disasm_history;

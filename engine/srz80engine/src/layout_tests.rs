@@ -11,7 +11,7 @@ use core::mem::{align_of, offset_of, size_of};
 
 #[test]
 fn announced_abi_version_matches_the_crate_constant() {
-    // The header is the contract; the crate constant and the exported query
+    // The header is the contract. The crate constant and the exported query
     // must report the same revision, or a caller cannot trust either.
     assert_eq!(crate::ABI_VERSION, ffi::SRZ80_ENGINE_ABI);
     assert_eq!(
@@ -122,7 +122,7 @@ fn headers_are_naturally_aligned() {
 #[test]
 fn has_field_respects_struct_size() {
     // A plugin built against the original ABI-1 layout declares exactly the
-    // prefix ending after `property_set`; every later field is optional.
+    // prefix ending after `property_set`. Every later field is optional.
     let mut plugin = ffi::SrhPlugin {
         abi_version: ffi::SRH_ABI,
         struct_size: (offset_of!(ffi::SrhPlugin, property_set)

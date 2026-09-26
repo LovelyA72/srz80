@@ -87,7 +87,7 @@ uint64_t App::snapshot_interval_ms() const {
 App::App() {
     controller.set_video_visible(show_video);
     controller.start();
-    // Startup may wait for the initial publication; frame rendering never waits
+    // Startup may wait for the initial publication. Frame rendering never waits
     // for a lifecycle command. The session thereafter uses exact generations.
     while (!controller.snapshot()->generation)
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -676,7 +676,7 @@ void App::apply_ui_settings() {
     const auto ui_font_file = preferred_font_path(ui_font_path, base);
 
     // A configured path takes precedence. Otherwise, use the runtime Sarasa
-    // asset when available; ImGui's default remains the final fallback.
+    // asset when available. ImGui's default remains the final fallback.
     if (!editor_font && !editor_font_file.empty()) {
         ImFontConfig cfg;
         cfg.OversampleH = 2;
@@ -1892,7 +1892,7 @@ void App::sync_disassembly_memory_revision() {
 
 void App::draw_modal_windows() {
     // Project lifecycle dialogs must own modal focus. In particular, a
-    // window-close request may arrive while a card dialog is open; submitting
+    // window-close request may arrive while a card dialog is open. Submitting
     // both popup windows in the same frame leaves the older popup blocking
     // input to the unsaved-project prompt. Skipping the lower-priority dialog
     // lets ImGui replace it in the popup stack with the project prompt.
@@ -2009,7 +2009,7 @@ void App::draw(bool draw_when_hidden) {
 
     // File shortcuts belong to the application shell, except when a focused
     // GUI tool owns the keyboard (for example, the Z80 assembler). Tool names
-    // are used as the window-name prefix; the suffix may contain an ImGui ID.
+    // are used as the window-name prefix. The suffix may contain an ImGui ID.
     bool tool_focused = false;
     if (auto *nav = ImGui::GetCurrentContext()->NavWindow) {
         const std::string_view window_name(nav->Name);

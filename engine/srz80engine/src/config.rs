@@ -1,6 +1,6 @@
 //! Small key=value INI store.
 //!
-//! Values are UTF-8 strings; typed interpretation belongs to the UI.  The
+//! Values are UTF-8 strings. Typed interpretation belongs to the UI.  The
 //! parser accepts ordinary `key=value` lines, ignores blank lines and lines
 //! without a separator, and trims ASCII whitespace -- it deliberately does not
 //! interpret section headers, so the GUI keeps its serialized ImGui settings

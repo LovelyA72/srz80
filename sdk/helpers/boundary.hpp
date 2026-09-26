@@ -14,7 +14,7 @@ template <class T> bool valid(const T *p) {
     return p && p->abi_version == SRH_ABI && p->struct_size >= sizeof(T);
 }
 // Image parts were appended after config_json. Existing hosts that provide the
-// pre-image-parts SrhConfig remain valid; consumers guard the new tail fields.
+// pre-image-parts SrhConfig remain valid. Consumers guard the new tail fields.
 template <> inline bool valid<SrhConfig>(const SrhConfig *p) {
     return p && p->abi_version == SRH_ABI &&
            p->struct_size >= offsetof(SrhConfig, config_json_size) + sizeof(p->config_json_size);
@@ -31,7 +31,7 @@ template <> inline bool valid<SrhHostInputV1>(const SrhHostInputV1 *p) {
     return p && p->abi_version == SRH_ABI &&
            p->struct_size >= offsetof(SrhHostInputV1, input_pop) + sizeof(p->input_pop);
 }
-// The video registration extension is optional; the original table ends at
+// The video registration extension is optional. The original table ends at
 // register_video and remains valid for plugins that do not opt into shaders.
 template <> inline bool valid<SrhHostVideoV1>(const SrhHostVideoV1 *p) {
     return p && p->abi_version == SRH_ABI &&

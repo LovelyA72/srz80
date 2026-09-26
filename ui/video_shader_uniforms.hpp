@@ -6,7 +6,7 @@
 
 namespace srz80::ui {
 // Append-only shader uniform layout. Keep integer scanout counters exact even
-// after float loses integer precision; the shader owns its signal phase model.
+// after float loses integer precision. The shader owns its signal phase model.
 struct VideoShaderUniforms {
     std::array<float, 4> source{};
     std::array<uint32_t, 4> scanout{}; // frame low/high words, next line, line count

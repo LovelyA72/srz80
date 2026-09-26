@@ -71,7 +71,7 @@ void App::clocks() {
     }
 
     // Keep state controls distinct without turning the toolbar into a bank of
-    // saturated status lights. Labels carry the meaning; color is secondary.
+    // saturated status lights. Labels carry the meaning. Color is secondary.
     const bool paused = snapshot->paused();
     const bool stopped = snapshot->stopped();
     ImVec4 run_color = (paused || stopped) ? ImVec4(0.24f, 0.65f, 0.28f, 1.0f)

@@ -294,7 +294,7 @@ class SimulationController : public ProjectRuntime {
     std::atomic<int64_t> provider_interest_until_{0};
     using CommandPayload = std::variant<InputBatch, ProjectRuntimeRequest, LegacyCommand, Properties, EditProperty, ReadMemory, WriteMemory, LoadMemory, DisassembleRange, TextQuery, CardTypes>;
 
-    // Transport owns sequencing/completion; payload type determines the operation.
+    // Transport owns sequencing/completion. Payload type determines the operation.
     struct Command {
         explicit Command(CommandPayload value) : payload(std::move(value)) {}
         uint64_t seq = 0;
@@ -332,7 +332,7 @@ class SimulationController : public ProjectRuntime {
     void drain_audio();
 
     // Engine boundary helpers.  Every one of them runs on the simulation
-    // thread; nothing here may be reached from the UI thread.
+    // thread. Nothing here may be reached from the UI thread.
     std::string engine_message() const;
     bool engine_running() const;
     bool engine_stopped() const;

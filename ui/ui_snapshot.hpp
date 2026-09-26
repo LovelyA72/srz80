@@ -82,7 +82,7 @@ struct UiVideoSnapshot {
 
 };
 
-// Immutable UI snapshot.  Everything here is owned by this structure; panels
+// Immutable UI snapshot.  Everything here is owned by this structure. Panels
 // may retain a snapshot after the simulation advances.
 struct UiSnapshot {
     uint64_t sequence = 0;
@@ -101,7 +101,7 @@ struct UiSnapshot {
     std::array<UiClock, 3> clocks{};
     // Smoothed execution cost: wall time inside the engine run slice divided by
     // simulated time actually advanced (not the wall-clock slice target).
-    // 100% = exactly real time; above 100% = falling behind; below = headroom.
+    // 100% = exactly real time. Above 100% = falling behind. Below = headroom.
     uint32_t simulation_load_percent = 0;
 
     std::shared_ptr<const UiInspectionSnapshot> inspection = std::make_shared<UiInspectionSnapshot>();
