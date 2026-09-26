@@ -1,0 +1,67 @@
+name: Verify builds
+
+'on':
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x64
+            preset: gcc-release
+            executable: srz80_gui
+            cli: srz80
+            engine: libsrz80engine.so
+          - platform: win-x64
+            preset: mingwcross-release
+            executable: srz80_gui.exe
+            cli: srz80.exe
+            engine: srz80engine.dll
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends \
+            build-essential cmake pkg-config mingw-w64 \
+            libasound2-dev libx11-dev libxext-dev libxrandr-dev \
+            libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev \
+            libxkbcommon-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev
+
+      - name: Install Rust Windows target
+        if: matrix.platform == 'win-x64'
+        run: rustup target add x86_64-pc-windows-gnu
+
+      - name: Configure
+        run: cmake --preset "${{ matrix.preset }}" -B "scratch/ci-${{ matrix.platform }}"
+
+      - name: Build host
+        run: cmake --build "scratch/ci-${{ matrix.platform }}" --parallel 4
+
+      - name: Verify host output
+        env:
+          RUNTIME: scratch/ci-${{ matrix.platform }}/bin
+          EXECUTABLE: ${{ matrix.executable }}
+          CLI: ${{ matrix.cli }}
+          ENGINE: ${{ matrix.engine }}
+        run: |
+          test -f "$RUNTIME/$EXECUTABLE"
+          test -f "$RUNTIME/$CLI"
+          test -f "$RUNTIME/$ENGINE"
