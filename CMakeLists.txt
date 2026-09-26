@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 
 # These are source-controlled release values. FORCE keeps a reused build tree
 # from retaining an older version in its CMake cache after this file changes.
-set(SRZ80_GUI_VERSION "0.2.0" CACHE STRING "GUI version" FORCE)
+set(SRZ80_GUI_VERSION "0.2.1" CACHE STRING "GUI version" FORCE)
 set(SRZ80_ENGINE_VERSION "1.0.10" CACHE STRING "Engine version" FORCE)
 project(SRZ80 VERSION "${SRZ80_GUI_VERSION}" LANGUAGES C CXX)
 
