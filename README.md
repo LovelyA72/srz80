@@ -1,6 +1,7 @@
 # SRZ80 Virtual Computer Rack
 
-Hello there~ :ksrsuki:
+Hello there~ 
+<img src="docs/ksrsuki.png" width="64" height="64" alt=":ksrsuki:">
 
 SRZ80 started as my failed fantasy console project and somehow turned into a virtual
 retro-computer rack. You can build your dream machine from various card
