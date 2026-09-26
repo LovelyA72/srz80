@@ -11,7 +11,8 @@ for captures and automated checks.
 
 These days, SRZ80 is my playground for all sorts of wonky, unhinged computer
 experiments, retro or otherwise. 
-<img height="400px" alt="image" src="https://github.com/user-attachments/assets/769c2f0f-24c0-47b4-8f21-a7f1e8bc703b" />
+<img height="400px" alt="image" src="https://github.com/user-attachments/assets/769c2f0f-24c0-47b4-8f21-a7f1e8bc703b" />\
+\* Images contain plugins that are not bundled with the distribution
 
 This repo has the host's source code:
 
@@ -52,6 +53,8 @@ cores are kept outside this host repository.
 <img height="400px" alt="image" src="https://github.com/user-attachments/assets/e72e9056-b6d1-41ec-884c-6663b284b693" />
 
 <img height="300px" alt="image" src="https://github.com/user-attachments/assets/2780e06e-1002-4d8c-a435-3480812d57a4" />
+
+\* Images contain plugins that are not bundled with the distribution
 
 ## AI Usage
 
