@@ -203,7 +203,7 @@ class App {
     int ui_font_hinting = 0;
     ImFont *project_dirty_font = nullptr;
     bool ui_font_loaded = false;
-    bool font_awesome_loaded = false;
+    bool tabler_icons_loaded = false;
     bool audio_input_enabled = true;
     std::string audio_input_device = "<System default>";
     int audio_input_channels = 1;

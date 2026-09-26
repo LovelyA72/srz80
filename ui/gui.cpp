@@ -8,21 +8,27 @@
 #include <cstring>
 #include <fstream>
 #include <imgui_internal.h>
-#include <srz80/font_awesome.h>
+#include <srz80/tabler_icons.h>
 #include <srz80/imgui_input.hpp>
 #include <string_view>
 #include <stdexcept>
 
 namespace srz80::ui {
 namespace {
-constexpr ImWchar font_awesome_ranges[] = {0xF000, 0xF2EE, 0xF500, 0xF500, 0};
+constexpr ImWchar tabler_icon_ranges[] = {
+    0xEA7A, 0xEA7A, 0xEA95, 0xEA95, 0xEAC5, 0xEAC5,
+    0xEB0B, 0xEB0B, 0xEB13, 0xEB13, 0xEB1C, 0xEB1C,
+    0xEB20, 0xEB20, 0xEB41, 0xEB41, 0xEB62, 0xEB62,
+    0xEBE7, 0xEBE7, 0xED45, 0xED46, 0xED4A, 0xED4A,
+    0xEDEF, 0xEDEF, 0xFAF7, 0xFAF7, 0xFC1F, 0xFC1F, 0
+};
 
-std::filesystem::path font_awesome_path(const std::filesystem::path &base) {
-    auto path = base / "resources/FontAwesome.otf";
+std::filesystem::path tabler_icons_path(const std::filesystem::path &base) {
+    auto path = base / "resources/TablerIcons.ttf";
     if (std::filesystem::exists(path))
         return path;
 #ifdef SRZ80_SOURCE_DIR
-    path = std::filesystem::path(SRZ80_SOURCE_DIR) / "resources/FontAwesome.otf";
+    path = std::filesystem::path(SRZ80_SOURCE_DIR) / "resources/TablerIcons.ttf";
     if (std::filesystem::exists(path))
         return path;
 #endif
@@ -711,11 +717,11 @@ void App::apply_ui_settings() {
             project_dirty_font = io.Fonts->AddFontDefault(&cfg);
     }
 
-    // Font Awesome is part of the emulator UI rather than a tool-owned
+    // Tabler Icons is part of the emulator UI rather than a tool-owned
     // resource.  Merge it into the active default font so every tool sees the
     // same glyphs through the shared Dear ImGui context and atlas.
-    if (!font_awesome_loaded) {
-        const auto path = font_awesome_path(base);
+    if (!tabler_icons_loaded) {
+        const auto path = tabler_icons_path(base);
         if (!path.empty() && io.Fonts && !io.Fonts->Fonts.empty()) {
             ImFont *target = io.FontDefault ? io.FontDefault : io.Fonts->Fonts[0];
             ImFontConfig cfg;
@@ -725,10 +731,10 @@ void App::apply_ui_settings() {
             cfg.OversampleH = 1;
             cfg.OversampleV = 1;
             const float size = target->LegacySize > 0.0f ? target->LegacySize : static_cast<float>(ui_font_size);
-            if (io.Fonts->AddFontFromFileTTF(path.string().c_str(), size, &cfg, font_awesome_ranges))
-                font_awesome_loaded = true;
+            if (io.Fonts->AddFontFromFileTTF(path.string().c_str(), size, &cfg, tabler_icon_ranges))
+                tabler_icons_loaded = true;
             else
-                controller.log_message("[ui] Could not load Font Awesome from " + path.string());
+                controller.log_message("[ui] Could not load Tabler Icons from " + path.string());
         }
     }
 }

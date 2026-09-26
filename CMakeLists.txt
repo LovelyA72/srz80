@@ -183,8 +183,8 @@ if(SRZ80_BUILD_GUI)
       "${CMAKE_CURRENT_SOURCE_DIR}/resources/SarasaMonoSC-Regular.ttf"
       "${SRZ80_RUNTIME_DIR}/resources/SarasaMonoSC-Regular.ttf"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      "${CMAKE_CURRENT_SOURCE_DIR}/resources/FontAwesome.otf"
-      "${SRZ80_RUNTIME_DIR}/resources/FontAwesome.otf"
+      "${CMAKE_CURRENT_SOURCE_DIR}/resources/TablerIcons.ttf"
+      "${SRZ80_RUNTIME_DIR}/resources/TablerIcons.ttf"
     VERBATIM)
 endif()
 

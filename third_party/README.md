@@ -30,10 +30,10 @@ statically into the desktop app.
 | Font | Version | License | Notice |
 | --- | --- | --- | --- |
 | [Sarasa Mono SC](https://github.com/be5invis/Sarasa-Gothic) | 1.0.41 (font metadata) | SIL OFL 1.1 | [Copyright notice](fonts/SarasaMonoSC-NOTICE.txt) |
-| [Font Awesome](https://github.com/FortAwesome/Font-Awesome/tree/v4.7.0) | 4.7.0 | SIL OFL 1.1 | [Copyright notice](fonts/FontAwesome-NOTICE.txt) |
+| [Tabler Icons](https://github.com/tabler/tabler-icons/tree/v3.35.0) | 3.35.0 | MIT | [License](fonts/TablerIcons-LICENSE.txt) |
 
-Both bundled fonts use the [full SIL Open Font License 1.1](fonts/OFL-1.1.txt).
-GUI builds stage the notices and license beside the fonts under `bin/licenses/fonts/`.
+Sarasa Mono SC uses the [full SIL Open Font License 1.1](fonts/OFL-1.1.txt).
+Tabler Icons uses the [MIT License](fonts/TablerIcons-LICENSE.txt).
 
 ## Rust dependencies
 

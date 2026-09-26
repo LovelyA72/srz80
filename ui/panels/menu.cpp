@@ -733,7 +733,7 @@ void App::license() {
         LibraryLicense{"ImGuiColorTextEdit 1.92.9", "MIT", "https://github.com/goossens/ImGuiColorTextEdit"},
         LibraryLicense{"ImGui Memory Editor 0.59", "MIT", "https://github.com/ocornut/imgui_club"},
         LibraryLicense{"Sarasa Mono SC 1.0.41", "SIL OFL 1.1", "https://github.com/be5invis/Sarasa-Gothic"},
-        LibraryLicense{"Font Awesome 4.7.0", "SIL OFL 1.1", "https://github.com/FortAwesome/Font-Awesome"},
+        LibraryLicense{"Tabler Icons 3.35.0", "MIT", "https://github.com/tabler/tabler-icons"},
         LibraryLicense{"cfg-if 1.0.4", "MIT OR Apache-2.0", "https://github.com/rust-lang/cfg-if"},
         LibraryLicense{"itoa 1.0.15", "MIT OR Apache-2.0", "https://github.com/dtolnay/itoa"},
         LibraryLicense{"libloading 0.8.6", "ISC", "https://github.com/nagisa/rust_libloading"},
