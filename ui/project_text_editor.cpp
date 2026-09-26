@@ -82,6 +82,61 @@ const TextEditor::Language *editor_language(const std::filesystem::path &path) {
         return TextEditor::Language::Cpp();
     if (extension == ".json") return TextEditor::Language::Json();
     if (extension == ".lua") return TextEditor::Language::Lua();
+    if (extension == ".ld" || extension == ".lds") {
+        static const TextEditor::Language language = [] {
+            auto value = *TextEditor::Language::C();
+            value.name = "Linker Script";
+            value.preprocess = 0;
+            value.singleLineComment = "//";
+            value.singleLineCommentAlt = "#";
+            value.keywords = {"ENTRY", "EXTERN", "GROUP", "INPUT", "MEMORY", "OUTPUT",
+                "OUTPUT_ARCH", "OUTPUT_FORMAT", "PHDRS", "PROVIDE", "PROVIDE_HIDDEN",
+                "REGION_ALIAS", "SEARCH_DIR", "SECTIONS", "ASSERT", "KEEP", "SORT",
+                "SORT_BY_NAME", "SORT_BY_ALIGNMENT", "AT", "ALIGN", "FILL", "NOLOAD"};
+            value.declarations = {"ORIGIN", "LENGTH", "ADDR", "LOADADDR", "SIZEOF",
+                "ALIGNOF", "DEFINED", "ABSOLUTE", "MAX", "MIN"};
+            value.identifiers.clear();
+            return value;
+        }();
+        return &language;
+    }
+    if (extension == ".md" || extension == ".markdown") return TextEditor::Language::Markdown();
+    if (extension == ".py" || extension == ".pyw") return TextEditor::Language::Python();
+    if (extension == ".sh" || extension == ".bash") {
+        static const TextEditor::Language language = [] {
+            auto value = *TextEditor::Language::Python();
+            value.name = "Shell";
+            value.otherStringStart.clear();
+            value.otherStringEnd.clear();
+            value.otherStringAltStart.clear();
+            value.otherStringAltEnd.clear();
+            value.keywords = {"case", "do", "done", "elif", "else", "esac", "fi", "for",
+                "function", "if", "in", "select", "then", "time", "until", "while"};
+            value.declarations = {"alias", "declare", "export", "local", "readonly", "typeset"};
+            value.identifiers = {"break", "cd", "continue", "echo", "eval", "exec", "exit",
+                "printf", "read", "return", "set", "shift", "source", "test", "trap", "unset"};
+            return value;
+        }();
+        return &language;
+    }
+    if (extension == ".cmd" || extension == ".bat") {
+        static const TextEditor::Language language = [] {
+            auto value = *TextEditor::Language::C();
+            value.name = "Windows Command";
+            value.caseSensitive = false;
+            value.preprocess = 0;
+            value.singleLineComment.clear();
+            value.commentStart.clear();
+            value.commentEnd.clear();
+            value.keywords = {"call", "echo", "else", "exit", "for", "goto", "if", "in",
+                "not", "pause", "rem", "set", "setlocal", "endlocal", "shift"};
+            value.declarations.clear();
+            value.identifiers = {"cd", "copy", "del", "dir", "move", "path", "popd",
+                "pushd", "ren", "rmdir", "start", "type"};
+            return value;
+        }();
+        return &language;
+    }
     if (extension == ".js" || extension == ".mjs" || extension == ".cjs") {
         static const TextEditor::Language language = [] {
             auto value = *TextEditor::Language::C();

@@ -3,7 +3,9 @@
 Open a text file from the Project files panel. The built-in editor provides line
 numbers and syntax highlighting for C, C++, JSON, Lua, JavaScript (`.js`,
 `.mjs`, `.cjs`), Ruby (`.rb`, `.rake`, `.gemspec`), PHP (`.php`, `.phtml`),
-and assembly files (`.asm`, `.s`, and `.z80`). An enabled file-handler plugin takes precedence for file types
+Markdown (`.md`, `.markdown`), Python (`.py`, `.pyw`), shell (`.sh`, `.bash`),
+Windows command (`.cmd`, `.bat`), linker scripts (`.ld`, `.lds`), and assembly
+files (`.asm`, `.s`, and `.z80`). An enabled file-handler plugin takes precedence for file types
 it supports.
 
 Editor colors and text size are under **Settings → UI → Editor**. Text size ranges
