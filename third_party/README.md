@@ -30,10 +30,11 @@ statically into the desktop app.
 | Font | Version | License | Notice |
 | --- | --- | --- | --- |
 | [Sarasa Mono SC](https://github.com/be5invis/Sarasa-Gothic) | 1.0.41 (font metadata) | SIL OFL 1.1 | [Copyright notice](fonts/SarasaMonoSC-NOTICE.txt) |
-| [Tabler Icons](https://github.com/tabler/tabler-icons/tree/v3.35.0) | 3.35.0 | MIT | [License](fonts/TablerIcons-LICENSE.txt) |
+| [Tabler Icons](https://github.com/tabler/tabler-icons/tree/v3.46.0) | 3.46.0 | MIT | [License](fonts/TablerIcons-LICENSE.txt) |
 
 Sarasa Mono SC uses the [full SIL Open Font License 1.1](fonts/OFL-1.1.txt).
 Tabler Icons uses the [MIT License](fonts/TablerIcons-LICENSE.txt).
+The bundled font also maps `device-workstation` to U+E000 because the GUI uses 16-bit ImGui characters.
 
 ## Rust dependencies
 

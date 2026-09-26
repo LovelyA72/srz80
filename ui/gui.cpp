@@ -16,11 +16,14 @@
 namespace srz80::ui {
 namespace {
 constexpr ImWchar tabler_icon_ranges[] = {
-    0xEA7A, 0xEA7A, 0xEA95, 0xEA95, 0xEAC5, 0xEAC5,
+    0xE000, 0xE000, 0xEA7A, 0xEA7A, 0xEA95, 0xEA95,
+    0xEA9D, 0xEA9D,
+    0xEAA2, 0xEAA2, 0xEAA4, 0xEAA4, 0xEAC5, 0xEAC5,
     0xEB0B, 0xEB0B, 0xEB13, 0xEB13, 0xEB1C, 0xEB1C,
     0xEB20, 0xEB20, 0xEB41, 0xEB41, 0xEB62, 0xEB62,
     0xEBE7, 0xEBE7, 0xED45, 0xED46, 0xED4A, 0xED4A,
-    0xEDEF, 0xEDEF, 0xFAF7, 0xFAF7, 0xFC1F, 0xFC1F, 0
+    0xEDEF, 0xEDEF, 0xEFA8, 0xEFA8, 0xF035, 0xF035,
+    0xFAF7, 0xFAF7, 0xFC1F, 0xFC1F, 0
 };
 
 std::filesystem::path tabler_icons_path(const std::filesystem::path &base) {
@@ -724,14 +727,20 @@ void App::apply_ui_settings() {
         const auto path = tabler_icons_path(base);
         if (!path.empty() && io.Fonts && !io.Fonts->Fonts.empty()) {
             ImFont *target = io.FontDefault ? io.FontDefault : io.Fonts->Fonts[0];
-            ImFontConfig cfg;
-            cfg.MergeMode = true;
-            cfg.DstFont = target;
-            cfg.PixelSnapH = true;
-            cfg.OversampleH = 1;
-            cfg.OversampleV = 1;
-            const float size = target->LegacySize > 0.0f ? target->LegacySize : static_cast<float>(ui_font_size);
-            if (io.Fonts->AddFontFromFileTTF(path.string().c_str(), size, &cfg, tabler_icon_ranges))
+            const auto merge_icons = [&](ImFont *font) {
+                ImFontConfig cfg;
+                cfg.MergeMode = true;
+                cfg.DstFont = font;
+                cfg.PixelSnapH = true;
+                cfg.OversampleH = 1;
+                cfg.OversampleV = 1;
+                const float size = font->LegacySize > 0.0f ? font->LegacySize : static_cast<float>(ui_font_size);
+                return io.Fonts->AddFontFromFileTTF(path.string().c_str(), size, &cfg, tabler_icon_ranges) != nullptr;
+            };
+            const bool default_loaded = merge_icons(target);
+            const bool dirty_loaded = !project_dirty_font || project_dirty_font == target ||
+                                      merge_icons(project_dirty_font);
+            if (default_loaded && dirty_loaded)
                 tabler_icons_loaded = true;
             else
                 controller.log_message("[ui] Could not load Tabler Icons from " + path.string());

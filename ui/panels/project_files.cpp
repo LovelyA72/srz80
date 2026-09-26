@@ -7,7 +7,9 @@
 #include <functional>
 #include <iterator>
 #include <imgui_internal.h>
+#include <srz80/tabler_icons.h>
 #include <stdexcept>
+#include <string_view>
 
 namespace srz80::ui {
 namespace {
@@ -16,6 +18,13 @@ std::string new_file_extension;
 char new_file_name[512]{};
 bool open_new_file_formats = false;
 bool open_new_file_name = false;
+const ImVec4 manifest_file_color = ImColor(0xF5, 0x7C, 0x58);
+const ImVec4 text_file_color = ImColor(0x66, 0xCC, 0xFF);
+const ImVec4 rom_file_color = ImColor(0xEE, 0x55, 0x55);
+const ImVec4 object_file_color = ImColor(0xBB, 0x55, 0x99);
+const ImVec4 markdown_file_color = ImColor(0x55, 0xEE, 0x77);
+const ImVec4 normal_file_name_color = ImColor(0xBB, 0xBB, 0xBB);
+const ImVec4 pending_file_name_color = ImColor(0xFF, 0xFF, 0xFF);
 
 std::string normalized_extension(const std::filesystem::path &path) {
     auto extension = path.extension().string();
@@ -24,6 +33,16 @@ std::string normalized_extension(const std::filesystem::path &path) {
     std::transform(extension.begin(), extension.end(), extension.begin(),
                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return extension;
+}
+
+bool is_source_extension(std::string_view extension) {
+    constexpr std::string_view supported[] = {
+        "txt", "c", "h", "cpp", "cc", "cxx", "hpp", "hh", "hxx", "ipp",
+        "json", "lua", "ld", "lds", "py", "pyw", "sh", "bash", "cmd",
+        "bat", "js", "mjs", "cjs", "rb", "rake", "gemspec", "php",
+        "phtml", "asm", "s", "z80"
+    };
+    return std::find(std::begin(supported), std::end(supported), extension) != std::end(supported);
 }
 }
 
@@ -224,12 +243,52 @@ void App::project_files() {
                 }
             } else if (entry.is_regular_file(error_code)) {
                 const auto normalized = std::filesystem::absolute(entry.path()).lexically_normal();
+                const auto extension = normalized_extension(entry.path());
+                const bool numbered_ic = extension.size() > 2 && extension.starts_with("ic") &&
+                    std::all_of(extension.begin() + 2, extension.end(),
+                                [](unsigned char c) { return std::isdigit(c); });
+                const bool registered_source = std::any_of(project_text_formats.begin(), project_text_formats.end(),
+                    [&](const auto &format) {
+                        return format->enabled && !format->binary && format->extension == extension;
+                    });
+                const char *icon = SRZ80_TI_FILE;
+                const ImVec4 *icon_color = &pending_file_name_color;
+                if (name == "project.json") {
+                    icon = SRZ80_TI_DEVICE_WORKSTATION;
+                    icon_color = &manifest_file_color;
+                } else if (extension == "md" || extension == "markdown") {
+                    icon = SRZ80_TI_FILE_DOWNLOAD;
+                    icon_color = &markdown_file_color;
+                } else if (extension == "bin" || extension == "rom" || numbered_ic) {
+                    icon = SRZ80_TI_FILE_DIGIT;
+                    icon_color = &rom_file_color;
+                } else if (extension == "o" || extension == "a" || extension == "elf") {
+                    icon = SRZ80_TI_FILE_BARCODE;
+                    icon_color = &object_file_color;
+                } else if (is_source_extension(extension) || registered_source) {
+                    icon = SRZ80_TI_FILE_TEXT;
+                    icon_color = &text_file_color;
+                }
                 const auto *document = project_session.workspace().find(normalized);
-                const bool dirty = document && document->dirty();
+                const bool project_manifest = normalized == std::filesystem::absolute(project_session.path()).lexically_normal();
+                const bool dirty = (document && document->dirty()) || (project_manifest && project_session.dirty());
                 if (dirty && project_dirty_font)
                     ImGui::PushFont(project_dirty_font);
-                const bool project_manifest = normalized == std::filesystem::absolute(project_session.path()).lexically_normal();
-                if (ImGui::Selectable((name + "##" + normalized.string()).c_str()))
+                const ImVec2 text_position = ImGui::GetCursorScreenPos();
+                const bool pressed = ImGui::Selectable(("##" + normalized.string()).c_str(),
+                                                       false, 0, ImVec2(0, ImGui::GetTextLineHeight()));
+                const ImVec2 item_max = ImGui::GetItemRectMax();
+                const ImVec4 clip_rect(text_position.x, text_position.y, item_max.x, item_max.y);
+                auto *draw_list = ImGui::GetWindowDrawList();
+                ImFont *font = ImGui::GetFont();
+                const float font_size = ImGui::GetFontSize();
+                draw_list->AddText(font, font_size, text_position, ImGui::GetColorU32(*icon_color),
+                                   icon, nullptr, 0.0f, &clip_rect);
+                const float name_x = text_position.x + ImGui::CalcTextSize(icon).x + ImGui::GetStyle().ItemInnerSpacing.x;
+                draw_list->AddText(font, font_size, ImVec2(name_x, text_position.y),
+                                   ImGui::GetColorU32(dirty ? pending_file_name_color : normal_file_name_color),
+                                   name.c_str(), nullptr, 0.0f, &clip_rect);
+                if (pressed)
                     open_project_file(entry.path());
                 if (dirty && project_dirty_font)
                     ImGui::PopFont();
