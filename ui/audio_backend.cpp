@@ -14,6 +14,10 @@ std::string sdl_error(const char *fallback) {
 
 AudioBackend::~AudioBackend() { close(); }
 
+void AudioBackend::set_project_gain_tenths(int tenths) {
+    project_gain_.store(std::pow(10.0f, std::clamp(tenths, -360, 240) / 200.0f));
+}
+
 bool AudioBackend::open(SimulationController &controller, const AudioBackendSettings &settings) {
     close();
     controller_ = &controller;
@@ -173,6 +177,12 @@ void SDLCALL AudioBackend::supply_audio(void *context, SDL_AudioStream *stream,
         if (!got || self.controller_->audio_epoch() != block_epoch) {
             self.primed_ = false;
             break;
+        }
+        const float gain = self.project_gain_.load();
+        if (gain != 1.0f) {
+            for (uint32_t i = 0; i < got * 2; ++i)
+                self.scratch_[i] = static_cast<int16_t>(std::clamp(
+                    std::lround(self.scratch_[i] * gain), -32768l, 32767l));
         }
         if (!SDL_PutAudioStreamData(stream, self.scratch_.data(), got * bytes_per_frame))
             break;

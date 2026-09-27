@@ -48,6 +48,7 @@ class AudioBackend {
     }
     const std::string &input_error() const { return input_error_; }
     void set_input_volume(uint32_t percent) { input_volume_.store(std::min(percent, 200u)); }
+    void set_project_gain_tenths(int tenths);
 
   private:
     static void SDLCALL supply_audio(void *context, SDL_AudioStream *stream,
@@ -78,6 +79,7 @@ class AudioBackend {
     uint32_t prebuffer_frames_ = 0;
     bool primed_ = false;
     std::array<int16_t, 8192 * 2> scratch_{};
+    std::atomic<float> project_gain_{1.0f};
     std::string error_;
 };
 } // namespace srz80::ui

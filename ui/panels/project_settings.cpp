@@ -1,12 +1,14 @@
 #include "../gui.hpp"
 #include <misc/cpp/imgui_stdlib.h>
 #include <algorithm>
+#include <cmath>
 
 namespace srz80::ui {
 
 void App::open_project_settings() {
     if (!project_session.loaded() || project_session.busy()) return;
     project_settings_draft = project_session.rack_info();
+    project_gain_draft = project_session.audio_gain_tenths();
     project_input_draft = project_session.input_routes();
     host_input.release(window, controller);
     project_settings_generation = project_session.generation();
@@ -38,13 +40,14 @@ void App::project_settings() {
                                  IM_ARRAYSIZE(project_settings_filter.InputBuf)))
         project_settings_filter.Build();
 
-    const char *categories[] = {"Config", "Notes", "Workspace", "Input"};
+    const char *categories[] = {"Config", "Notes", "Workspace", "Input", "Audio"};
     const char *search_terms[] = {"Application Config Name Author Version", "Application Notes",
-                                  "Project Workspace Manifest Directory", "Input Video Keyboard Mouse Mode Relative Absolute"};
+                                  "Project Workspace Manifest Directory", "Input Video Keyboard Mouse Mode Relative Absolute",
+                                  "Audio Gain dB"};
     const bool filtering = project_settings_filter.IsActive();
     const float footer = ImGui::GetFrameHeightWithSpacing() + ImGui::GetStyle().ItemSpacing.y;
     ImGui::BeginChild("categories", ImVec2(180, -footer));
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 5; ++i) {
         if (filtering && !project_settings_filter.PassFilter(search_terms[i])) continue;
         if (ImGui::Selectable(categories[i], project_settings_category == i))
             project_settings_category = i;
@@ -54,7 +57,7 @@ void App::project_settings() {
     ImGui::BeginChild("properties", ImVec2(0, -footer));
     bool any = false;
     ImGui::BeginDisabled(project_session.busy());
-    for (int category = 0; category < 4; ++category) {
+    for (int category = 0; category < 5; ++category) {
         if (!filtering && project_settings_category != category) continue;
         if (filtering && !project_settings_filter.PassFilter(search_terms[category])) continue;
         if (category == 3) {
@@ -155,6 +158,12 @@ void App::project_settings() {
             } else if (category == 1) {
                 if (row("Notes", "Application Notes"))
                     ImGui::InputTextMultiline("##notes", &project_settings_draft.notes, ImVec2(-FLT_MIN, 240));
+            } else if (category == 4) {
+                if (row("Gain", "Audio Gain dB")) {
+                    float db = project_gain_draft / 10.0f;
+                    if (ImGui::SliderFloat("##gain", &db, -36.0f, 24.0f, "%+.1f dB"))
+                        project_gain_draft = static_cast<int>(std::lround(db * 10.0f));
+                }
             } else {
                 if (row("Manifest", "Project Workspace Manifest"))
                     ImGui::TextWrapped("%s", project_session.path().empty() ? "Unsaved project" :
@@ -174,10 +183,13 @@ void App::project_settings() {
     auto current = project_session.rack_info();
     // Thumbnail imports can finish while this dialog is open. Preserve their result.
     project_settings_draft.thumbnail = current.thumbnail;
-    const bool changed = project_settings_draft != current || project_input_draft != project_session.input_routes();
+    const bool changed = project_settings_draft != current || project_input_draft != project_session.input_routes() ||
+                         project_gain_draft != project_session.audio_gain_tenths();
     auto apply = [&] {
         host_input.release(window, controller);
         project_session.commit_input_routes(project_settings_generation, project_input_draft);
+        if (project_session.commit_audio_gain_tenths(project_gain_draft))
+            audio_backend.set_project_gain_tenths(project_gain_draft);
         if (project_session.commit_rack_info(project_settings_draft))
             rack_info_initialized = false;
     };

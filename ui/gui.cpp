@@ -312,6 +312,7 @@ void App::poll_project_operation() {
                 break;
             case Kind::installed:
                 try {
+                    audio_backend.set_project_gain_tenths(project_session.audio_gain_tenths());
                     invalidate_project_views(effect.clear_workspace);
                     snapshot = controller.snapshot();
                     selected = effect.selected;
@@ -360,6 +361,7 @@ void App::poll_project_operation() {
                 }
                 break;
             case Kind::closed:
+                audio_backend.set_project_gain_tenths(0);
                 invalidate_project_views(true);
                 snapshot = controller.snapshot();
                 show_welcome = true;
@@ -749,6 +751,7 @@ void App::apply_ui_settings() {
 }
 
 void App::start_audio() {
+    audio_backend.set_project_gain_tenths(project_session.audio_gain_tenths());
     AudioBackendSettings settings;
     settings.input_enabled = audio_input_enabled;
     settings.input_device = audio_input_device;

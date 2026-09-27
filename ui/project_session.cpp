@@ -1,5 +1,6 @@
 #include "project_session.hpp"
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <stdexcept>
 #include <unordered_set>
@@ -265,6 +266,26 @@ bool ProjectSession::commit_mixer_master(uint32_t percent) {
     if (!mixer.is_object()) mixer = nlohmann::json::object();
     if (mixer.value("master_volume", 100u) == percent) return false;
     mixer["master_volume"] = percent;
+    ++revision_;
+    return true;
+}
+int ProjectSession::audio_gain_tenths() const {
+    if (!loaded() || !document_.is_object()) return 0;
+    const auto audio = document_.find("audio");
+    if (audio == document_.end() || !audio->is_object()) return 0;
+    const auto gain = audio->find("gain_db");
+    if (gain == audio->end() || !gain->is_number()) return 0;
+    const double db = gain->get<double>();
+    if (!std::isfinite(db)) return 0;
+    return static_cast<int>(std::lround(std::clamp(db, -36.0, 24.0) * 10.0));
+}
+bool ProjectSession::commit_audio_gain_tenths(int tenths) {
+    if (!loaded()) return false;
+    tenths = std::clamp(tenths, -360, 240);
+    if (audio_gain_tenths() == tenths) return false;
+    auto &audio = document_["audio"];
+    if (!audio.is_object()) audio = nlohmann::json::object();
+    audio["gain_db"] = tenths / 10.0;
     ++revision_;
     return true;
 }

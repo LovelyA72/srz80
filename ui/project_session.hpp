@@ -132,6 +132,8 @@ class ProjectSession {
     // persisted position plus its registration name/ordinal, never a transient
     // engine source handle.
     bool commit_mixer_master(uint32_t percent);
+    int audio_gain_tenths() const;
+    bool commit_audio_gain_tenths(int tenths);
     RackInfo rack_info() const;
     bool commit_rack_info(RackInfo info);
     bool commit_mixer_source(uint64_t owner, std::string name, uint32_t ordinal,
