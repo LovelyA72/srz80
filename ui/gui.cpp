@@ -555,6 +555,12 @@ void App::load_config() {
     scope_stereo = controller.config_get("scope.stereo", "1") != "0";
     video_vsync = controller.config_get("video.vsync", "1") != "0";
     try {
+        video_buffer_frames = std::clamp(std::stoi(controller.config_get("video.buffer_frames", "0")), 0, 5);
+    } catch (...) {
+        video_buffer_frames = 0;
+    }
+    controller.set_video_buffer_frames(static_cast<uint32_t>(video_buffer_frames));
+    try {
         video_frame_rate_limit = std::stoi(controller.config_get("video.frame_rate_limit", "100"));
     } catch (...) {
         video_frame_rate_limit = 100;
@@ -1327,6 +1333,26 @@ void App::register_app_config() {
                      return SRH_OK;
                  });
 
+    register_one("video.buffer_frames", "Video buffer", "Frames held before display. Adds video latency",
+                 Srh_CONFIG_INT, "0",
+                 [](void *context, char *value, uint32_t capacity) -> SrhStatus {
+                     if (!value || !capacity) return SRH_INVALID;
+                     std::snprintf(value, capacity, "%d", static_cast<App *>(context)->video_buffer_frames);
+                     return SRH_OK;
+                 },
+                 [](void *context, const char *value) -> SrhStatus {
+                     if (!value) return SRH_INVALID;
+                     try {
+                         auto *app = static_cast<App *>(context);
+                         app->video_buffer_frames = std::clamp(std::stoi(value), 0, 5);
+                         app->controller.set_video_buffer_frames(
+                             static_cast<uint32_t>(app->video_buffer_frames));
+                     } catch (...) {
+                         return SRH_INVALID;
+                     }
+                     return SRH_OK;
+                 });
+
     register_one("video.frame_rate_limit", "Frame rate limit",
                  "Maximum GUI frame rate. 0 means no limit",
                  Srh_CONFIG_INT, "100",
@@ -1752,6 +1778,7 @@ void App::sync_window_states() {
     post_config_if_changed("memory_editor.grey_zeroes", memory_editor_grey_zeroes ? "1" : "0");
     post_config_if_changed("memory_editor.uppercase_hex", memory_editor_uppercase_hex ? "1" : "0");
     post_config_if_changed("video.vsync", video_vsync ? "1" : "0");
+    post_config_if_changed("video.buffer_frames", std::to_string(video_buffer_frames));
     post_config_if_changed("video.frame_rate_limit", std::to_string(video_frame_rate_limit));
     post_config_if_changed("ui.snapshot_normal_ms", std::to_string(snapshot_normal_ms));
     post_config_if_changed("ui.snapshot_high_ms", std::to_string(snapshot_high_ms));
@@ -1842,6 +1869,7 @@ void App::save_config() {
     set("memory_editor.grey_zeroes", memory_editor_grey_zeroes ? "1" : "0");
     set("memory_editor.uppercase_hex", memory_editor_uppercase_hex ? "1" : "0");
     set("video.vsync", video_vsync ? "1" : "0");
+    set("video.buffer_frames", std::to_string(video_buffer_frames));
     set("video.frame_rate_limit", std::to_string(video_frame_rate_limit));
     set("ui.snapshot_normal_ms", std::to_string(snapshot_normal_ms));
     set("ui.snapshot_high_ms", std::to_string(snapshot_high_ms));

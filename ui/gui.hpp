@@ -17,6 +17,7 @@
 #include <srz80/tool.h>
 #include <array>
 #include <cstdint>
+#include <deque>
 #include <filesystem>
 #include <future>
 #include <imgui.h>
@@ -175,6 +176,8 @@ class App {
     std::map<std::string, std::string> settings_draft;
     std::map<std::string, std::string> settings_original;
     bool video_vsync = true;
+    int video_buffer_frames = 0;
+    int video_buffer_applied = 0;
     int video_frame_rate_limit = 100;
     int snapshot_normal_ms = 33;
     int snapshot_high_ms = 66;
@@ -450,8 +453,23 @@ class App {
         bool shader_enabled = false;
         bool shader_state_initialized = false;
         VideoShaderDrawData shader_draw;
+        struct QueuedFrame {
+            uint64_t sequence = 0;
+            UiVideoSnapshot::VideoFrame frame;
+        };
+        std::deque<QueuedFrame> pending;
+        QueuedFrame displayed;
+        uint64_t seen_sequence = 0;
+        uint64_t seen_scanout_frame = 0;
+        bool has_seen_scanout = false;
+        bool has_displayed = false;
+        bool buffering_started = false;
+        std::chrono::steady_clock::time_point last_arrival{};
+        std::chrono::nanoseconds frame_period{1'000'000'000 / 60};
+        std::chrono::steady_clock::time_point next_frame_at{};
     };
     std::map<srz80::Handle, VideoTexture> video_textures;
+    uint64_t video_buffer_generation = 0;
     std::map<SrhHandle, std::shared_ptr<ToolDialogState>> tool_dialogs;
     SrhHandle next_tool_dialog = 1;
     SrhToolHostV1 tool_host{};

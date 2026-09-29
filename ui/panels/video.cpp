@@ -217,6 +217,21 @@ void App::video() {
         ImGui::End();
         return;
     }
+    const auto incoming = controller.take_video_snapshots();
+    if (video_buffer_generation != snapshot->generation || video_buffer_applied != video_buffer_frames) {
+        for (auto &[id, entry] : video_textures) {
+            (void)id;
+            entry.pending.clear();
+            entry.has_displayed = false;
+            entry.buffering_started = false;
+            entry.has_seen_scanout = false;
+            entry.seen_sequence = 0;
+            entry.last_arrival = {};
+            entry.frame_period = std::chrono::nanoseconds(1'000'000'000 / 60);
+        }
+        video_buffer_generation = snapshot->generation;
+        video_buffer_applied = video_buffer_frames;
+    }
     auto surfaces = snapshot->inspection->video_surfaces;
     std::set<srz80::Handle> active;
     for (const auto &surface : surfaces)
@@ -245,6 +260,82 @@ void App::video() {
             ImGui::TextDisabled("Captured · Ctrl+Alt to release");
         }
         auto &entry = video_textures[surface.id];
+        if (entry.width && (entry.width != surface.width || entry.height != surface.height)) {
+            entry.pending.clear();
+            entry.has_displayed = false;
+            entry.buffering_started = false;
+            entry.has_seen_scanout = false;
+            entry.seen_sequence = 0;
+            entry.last_arrival = {};
+            entry.frame_period = std::chrono::nanoseconds(1'000'000'000 / 60);
+        }
+        UiVideoSnapshot buffered_video;
+        const UiVideoSnapshot *render_video = snapshot->video.get();
+        if (video_buffer_frames > 0) {
+            const auto now = std::chrono::steady_clock::now();
+            const auto bytes = static_cast<size_t>(surface.width) * surface.height * 4u;
+            for (const auto &publication : incoming) {
+                if (publication->generation != snapshot->generation || !publication->video) continue;
+                if (!snapshot->paused() &&
+                    now - publication->video->published_at > std::chrono::milliseconds(250)) continue;
+                const auto candidate = publication->video->video_frames.find(surface.id);
+                if (candidate == publication->video->video_frames.end()) continue;
+                const auto &frame = candidate->second;
+                if (frame.status != SRH_OK || frame.total != bytes || !frame.rgba) continue;
+                if (frame.has_scanout && entry.has_seen_scanout &&
+                    frame.scanout_frame < entry.seen_scanout_frame) {
+                    entry.pending.clear();
+                    entry.buffering_started = false;
+                    entry.has_displayed = false;
+                    entry.last_arrival = {};
+                    entry.frame_period = std::chrono::nanoseconds(1'000'000'000 / 60);
+                }
+                if (frame.has_scanout && entry.has_seen_scanout &&
+                    frame.scanout_frame == entry.seen_scanout_frame) continue;
+                if (!frame.has_scanout && publication->video->sequence == entry.seen_sequence) continue;
+                const auto arrival = publication->video->published_at;
+                if (entry.last_arrival != std::chrono::steady_clock::time_point{}) {
+                    const auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                        arrival - entry.last_arrival);
+                    if (elapsed > std::chrono::nanoseconds::zero() &&
+                        elapsed < std::chrono::milliseconds(100))
+                        entry.frame_period = (entry.frame_period * 7 + elapsed) / 8;
+                }
+                entry.last_arrival = arrival;
+                entry.seen_sequence = publication->video->sequence;
+                entry.has_seen_scanout = frame.has_scanout;
+                entry.seen_scanout_frame = frame.scanout_frame;
+                entry.pending.push_back({publication->video->sequence, frame});
+                while (entry.pending.size() > static_cast<size_t>(video_buffer_frames + 2))
+                    entry.pending.pop_front();
+            }
+            if (snapshot->paused() && !entry.buffering_started && !entry.pending.empty()) {
+                entry.displayed = std::move(entry.pending.back());
+                entry.pending.clear();
+                entry.has_displayed = true;
+            }
+            if (!entry.buffering_started &&
+                !snapshot->paused() &&
+                entry.pending.size() > static_cast<size_t>(video_buffer_frames)) {
+                entry.buffering_started = true;
+                entry.next_frame_at = now;
+            }
+            if (entry.buffering_started && now >= entry.next_frame_at) {
+                if (!entry.pending.empty()) {
+                    entry.displayed = std::move(entry.pending.front());
+                    entry.pending.pop_front();
+                    entry.has_displayed = true;
+                }
+                entry.next_frame_at = now + entry.frame_period;
+            }
+            if (snapshot->paused() && entry.pending.empty())
+                entry.buffering_started = false;
+            if (entry.has_displayed) {
+                buffered_video.sequence = entry.displayed.sequence;
+                buffered_video.video_frames.emplace(surface.id, entry.displayed.frame);
+            }
+            render_video = &buffered_video;
+        }
         const uint32_t ordinal = [&]() {
             uint32_t value = 0;
             for (const auto &prior : surfaces) {
@@ -253,8 +344,8 @@ void App::video() {
             }
             return value;
         }();
-        const auto found = snapshot->video->video_frames.find(surface.id);
-        const bool has_scanout = found != snapshot->video->video_frames.end() && found->second.has_scanout;
+        const auto found = render_video->video_frames.find(surface.id);
+        const bool has_scanout = found != render_video->video_frames.end() && found->second.has_scanout;
         const bool shader_allowed = (surface.flags & SRH_VIDEO_ALLOW_SHADER) != 0;
         if (!entry.shader_state_initialized || entry.surface_ordinal != ordinal ||
             entry.width != surface.width || entry.height != surface.height) {
@@ -306,13 +397,13 @@ void App::video() {
             entry.shader_texture = nullptr;
         }
 
-        if (found != snapshot->video->video_frames.end() && found->second.rgba &&
+        if (found != render_video->video_frames.end() && found->second.rgba &&
             found->second.status == SRH_OK && found->second.total == entry.bytes) {
-            const bool uploaded = entry.texture && (entry.publication == snapshot->video->sequence ||
+            const bool uploaded = entry.texture && (entry.publication == render_video->sequence ||
                 SDL_UpdateTexture(entry.texture, nullptr, found->second.rgba->data(),
                                   static_cast<int>(surface.width * 4u)));
             if (uploaded) {
-                entry.publication = snapshot->video->sequence;
+                entry.publication = render_video->sequence;
                 const uint32_t target_width = scaled_dimension(surface.width, video_scale);
                 const uint32_t target_height = scaled_dimension(surface.height, video_scale);
                 const uint32_t shader_groups = std::max(
@@ -339,12 +430,12 @@ void App::video() {
                         if (entry.cosine_texture)
                             SDL_SetTextureScaleMode(entry.cosine_texture, SDL_SCALEMODE_NEAREST);
                     }
-                    if (entry.cosine_texture && entry.cosine_publication != snapshot->video->sequence) {
+                    if (entry.cosine_texture && entry.cosine_publication != render_video->sequence) {
                         const auto scaled = cosine_scale(*found->second.rgba, surface.width, surface.height,
                                                          target_width, target_height);
                         if (SDL_UpdateTexture(entry.cosine_texture, nullptr, scaled.data(),
                                               static_cast<int>(target_width * 4u)))
-                            entry.cosine_publication = snapshot->video->sequence;
+                            entry.cosine_publication = render_video->sequence;
                     }
                     display_texture = entry.cosine_texture;
                 } else if (entry.texture) {
@@ -416,7 +507,7 @@ void App::video() {
             }
         } else {
             ImGui::TextDisabled("Video unavailable (status %d).",
-                                found != snapshot->video->video_frames.end()
+                                found != render_video->video_frames.end()
                                     ? static_cast<int>(found->second.status)
                                     : static_cast<int>(SRH_UNAVAILABLE));
         }

@@ -88,6 +88,8 @@ class SimulationController : public ProjectRuntime {
     bool started() const { return thread_started_; }
 
     std::shared_ptr<const UiSnapshot> snapshot() const;
+    void set_video_buffer_frames(uint32_t frames);
+    std::vector<std::shared_ptr<const UiSnapshot>> take_video_snapshots();
     uint64_t memory_revision() const { return memory_revision_.load(); }
 
     // Frequent actions are posted and acknowledged asynchronously through the
@@ -368,6 +370,8 @@ class SimulationController : public ProjectRuntime {
 
     mutable std::mutex snapshot_mutex_;
     std::shared_ptr<const UiSnapshot> latest_;
+    std::deque<std::shared_ptr<const UiSnapshot>> video_snapshots_;
+    std::atomic<uint32_t> video_buffer_frames_{0};
 
     uint64_t generation_ = 1;
     std::atomic<uint64_t> command_ack_seq_{0};

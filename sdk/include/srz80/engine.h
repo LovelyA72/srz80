@@ -664,13 +664,14 @@ SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_text_endpoints(const SrzEngine *engin
                                                           SrzResult *result);
 SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_video_surfaces(const SrzEngine *engine,
                                                           SrzResult *result);
-/* Caller-owned RGBA8 copy. `size` carries capacity in and copied bytes out. */
+/* Caller-owned RGBA8 copy of the latest completed image.
+   `size` carries capacity in and copied bytes out. */
 SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_video_read(SrzEngine *engine, SrhHandle surface,
                                                       uint64_t offset, uint8_t *buffer,
                                                       uint32_t *size, uint32_t *total);
 
 /* Query immediately after video_read on the same engine thread, without
-   advancing simulation, to pair pixels and scanout. Untimed surfaces return
+   advancing simulation, to pair pixels and timing. Untimed surfaces return
    SRH_UNAVAILABLE. Output is committed only on success. Initialize SRH_HEADER. */
 SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_video_timing(SrzEngine *engine, SrhHandle surface,
                                                         SrhVideoTiming *timing);

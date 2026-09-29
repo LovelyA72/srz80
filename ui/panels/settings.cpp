@@ -84,12 +84,14 @@ bool render_entry(App *app, const SettingsEntry &entry) {
             value = 0;
         }
         const bool input_volume = entry.name == "audio.input_volume";
+        const bool video_buffer = entry.name == "video.buffer_frames";
         const bool percentage = entry.name == "audio.master_volume" || input_volume;
-        const int maximum = input_volume ? 200 : 100;
-        if (percentage)
+        const int maximum = video_buffer ? 5 : input_volume ? 200 : 100;
+        if (percentage || video_buffer)
             value = std::clamp(value, 0, maximum);
         const bool edited = percentage ? ImGui::SliderInt("##value", &value, 0, maximum, "%d%%")
-                                       : ImGui::InputInt("##value", &value);
+                          : video_buffer ? ImGui::SliderInt("##value", &value, 0, maximum)
+                                         : ImGui::InputInt("##value", &value);
         if (edited) {
             if (entry.name == "audio.input_channels") value = std::clamp(value, 1, 8);
             changed = set_entry_value(app, entry, std::to_string(value));

@@ -206,6 +206,7 @@ typedef uint32_t SrhVideoFlags;
    This is deliberately opt-in: an ordinary video registration is never
    shader-enabled just because the host has a shader selected. */
 enum { SRH_VIDEO_ALLOW_SHADER = 1u };
+/* Read the last completed image. Its timing stays paired with it. */
 typedef SrhStatus(SRH_CALL *SrhVideoQuery)(void *, uint64_t, uint8_t *, uint32_t *, uint32_t *);
 typedef SrhStatus(SRH_CALL *SrhVideoRegister)(void *, SrhHandle, uint32_t, uint32_t,
                                                SrhVideoFormat, SrhVideoQuery, void *,
@@ -213,9 +214,10 @@ typedef SrhStatus(SRH_CALL *SrhVideoRegister)(void *, SrhHandle, uint32_t, uint3
 typedef SrhStatus(SRH_CALL *SrhVideoRegisterEx)(void *, SrhHandle, uint32_t, uint32_t,
                                                   SrhVideoFormat, SrhVideoQuery, void *,
                                                   SrhVideoFlags, SrhHandle *);
-/* Card-owned scanout position, copied on the simulation thread. Frame number
-   advances at each field/frame boundary, including when pixels do not change.
-   Reset may restart it. scanline is the next line to scan; line_count > 0. */
+/* Timing of the published image. Raster cards capture it before changing field
+   phase. frame_number advances for every completed field, even if pixels did
+   not change. scanline is the next line at capture. Reset may restart the
+   counter. Non-raster cards with timing use scanline=0 and line_count=1. */
 typedef struct SrhVideoTiming {
     SRH_HEADER;
     uint64_t frame_number;

@@ -152,6 +152,23 @@ std::shared_ptr<const UiSnapshot> SimulationController::snapshot() const {
     return latest_;
 }
 
+std::vector<std::shared_ptr<const UiSnapshot>> SimulationController::take_video_snapshots() {
+    std::lock_guard lock(snapshot_mutex_);
+    std::vector<std::shared_ptr<const UiSnapshot>> frames;
+    frames.reserve(video_snapshots_.size());
+    while (!video_snapshots_.empty()) {
+        frames.push_back(std::move(video_snapshots_.front()));
+        video_snapshots_.pop_front();
+    }
+    return frames;
+}
+
+void SimulationController::set_video_buffer_frames(uint32_t frames) {
+    std::lock_guard lock(snapshot_mutex_);
+    video_buffer_frames_ = std::min(frames, 5u);
+    video_snapshots_.clear();
+}
+
 bool SimulationController::project_scoped(const CommandPayload &payload) {
     // Card-type discovery describes the host's plugin directory, not the
     // loaded project, so a generation change must not reject it.

@@ -90,9 +90,10 @@ void SimulationController::publish_due() {
     bool publish_inspection =
         force_inspection_publish_.exchange(false) ||
         (inspection_visible_ && now - last_inspection_ >= interval && inspection_dirty_.exchange(false));
+    constexpr auto video_interval = std::chrono::nanoseconds(1'000'000'000 / 60);
     bool publish_video = video_visible_ &&
         (force_video_publish_.exchange(false) ||
-         (now - last_video_ >= interval && video_dirty_.exchange(false)));
+         (now - last_video_ >= video_interval && video_dirty_.exchange(false)));
     const bool manual = manual_refresh_.exchange(false);
     if (manual) {
         publish_control = true;
@@ -405,13 +406,24 @@ void SimulationController::publish_due() {
         last_control_ = now;
     if (publish_inspection)
         last_inspection_ = now;
-    if (publish_video)
-        last_video_ = now;
+    if (publish_video) {
+        const auto elapsed = now - last_video_;
+        if (last_video_ == std::chrono::steady_clock::time_point{} || elapsed < video_interval)
+            last_video_ = now;
+        else
+            last_video_ += video_interval * (elapsed / video_interval);
+    }
 
     snapshot->snapshot_copy_us = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::steady_clock::now() - now).count());
     {
         std::lock_guard lock(snapshot_mutex_);
+        const auto buffer_frames = video_buffer_frames_.load();
+        if (publish_video && buffer_frames) {
+            video_snapshots_.push_back(snapshot);
+            if (video_snapshots_.size() > buffer_frames + 2)
+                video_snapshots_.pop_front();
+        }
         latest_ = std::move(snapshot);
     }
 }

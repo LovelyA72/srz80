@@ -74,9 +74,13 @@ A video plugin must register its surface with `SRH_VIDEO_ALLOW_SHADER` and provi
 scanout timing through the optional `host.video.v1.set_video_timing` tail. Plugins
 must check `struct_size` before using that field.
 
+Video reads return completed images. Raster plugins capture pixels and timing
+at vblank. Interlaced surfaces keep the other field from the previous scan.
+
 The engine validates and copies timing through `srz80_engine_video_timing`. The
 controller reads it immediately after the pixel buffer and publishes both values
-together without advancing simulation. If timing is missing or cannot be read,
+together without advancing simulation. Video publication runs at 60 Hz,
+separate from debugger snapshots. If timing is missing or cannot be read,
 the app shows the unfiltered frame without clearing the saved preference.
 
 Shader enablement is stored under `video.shaders`, keyed by persisted card order
