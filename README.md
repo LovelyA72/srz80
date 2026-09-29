@@ -58,6 +58,8 @@ cores are kept outside this host repository.
 
 ## AI Usage
 
+AI usage is strictly regulated in this project.
+
 Do not create commits with Claude attribution. Pull requests containing Claude
 attribution will be rejected. I do not want Claude attribution included in my
 commit history.
