@@ -80,7 +80,20 @@ void App::mixer() {
         meter_states.clear();
         meter_generation = snapshot->generation;
     }
-    const float strip_height = std::max(150.0f, ImGui::GetContentRegionAvail().y - 88.0f);
+    constexpr float source_width = 72.0f;
+    const auto &sources = snapshot->audio_sources;
+    float label_height = ImGui::GetTextLineHeight();
+    for (const auto &source : sources) {
+        if (!source.active)
+            continue;
+        const char *name = source.name.empty() ? "Audio source" : source.name.c_str();
+        label_height = std::max(label_height, ImGui::CalcTextSize(name, nullptr, false, source_width).y);
+    }
+    const auto &style = ImGui::GetStyle();
+    const float controls_height = 2.0f * ImGui::GetFrameHeight() +
+                                  3.0f * style.ItemSpacing.y + label_height;
+    const float strip_height = std::max(150.0f, ImGui::GetContentRegionAvail().y -
+                                        controls_height - style.ScrollbarSize - 2.0f);
     auto master = static_cast<int>(snapshot->audio_master_volume);
     ImGui::BeginGroup();
     ImGui::PushID("master");
@@ -102,7 +115,6 @@ void App::mixer() {
     ImGui::SameLine();
     ImGui::BeginChild("mixer_sources", ImVec2(0.0f, 0.0f), false,
                       ImGuiWindowFlags_HorizontalScrollbar);
-    const auto sources = snapshot->audio_sources;
     if (sources.empty()) {
         ImGui::TextDisabled("No sources");
     } else {
@@ -128,7 +140,7 @@ void App::mixer() {
             ImGui::SameLine(0.0f, 3.0f);
             level_meter(source.id, snapshot->sequence, &source.level_peak, 1,
                         strip_height, snapshot->paused() || source.muted);
-            ImGui::SetNextItemWidth(72.0f);
+            ImGui::SetNextItemWidth(source_width);
             bool pan_changed =
                 ImGui::SliderInt("##pan", &pan, -64, 63, "Pan %d", ImGuiSliderFlags_AlwaysClamp);
             pan_changed |= srz80::gui::reset_on_middle_click(pan, 0);
@@ -142,7 +154,9 @@ void App::mixer() {
                 project_session.commit_mixer_source(source.owner, source.name, ordinal,
                                                      static_cast<uint32_t>(volume), muted, pan);
             }
-            ImGui::TextWrapped("%s", source.name.empty() ? "Audio source" : source.name.c_str());
+            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + source_width);
+            ImGui::TextUnformatted(source.name.empty() ? "Audio source" : source.name.c_str());
+            ImGui::PopTextWrapPos();
             ImGui::EndGroup();
             ImGui::SameLine();
             ImGui::PopID();
