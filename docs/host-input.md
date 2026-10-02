@@ -5,6 +5,7 @@ Each surface has independent Keyboard, Mouse, and Mouse mode settings. A combine
 card may be selected in both fields. None disables that stream. Missing or
 incompatible destinations remain visible and are never replaced automatically.
 Apply commits routing; Cancel discards the draft. Save persists applied settings.
+Missing video cards have a fourth-row Delete button to remove that surface's input route.
 
 Click a visible video image to activate it; that first click is not sent to the
 card. Keyboard events use physical keys, including modifiers, keypad and function

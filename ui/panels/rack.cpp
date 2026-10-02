@@ -1,4 +1,6 @@
 #include "../gui.hpp"
+#include "../card_configuration.hpp"
+#include <misc/cpp/imgui_stdlib.h>
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
@@ -8,6 +10,11 @@
 
 namespace srz80::ui {
 namespace {
+
+std::string card_space_name(const UiInspectionSnapshot &snapshot, Handle id) {
+    const auto found = snapshot.spaces.find(id);
+    return found == snapshot.spaces.end() ? std::string() : found->second.name;
+}
 
 uint64_t config_number(const nlohmann::json &card, const char *name, uint64_t fallback = 0) {
     if (!card.contains(name))
@@ -359,6 +366,16 @@ void App::add_card_modal() {
             replace_path_buffers(rom_paths, type.image_slots.size());
             add_project_file_paths.clear();
             const auto defaults = nlohmann::json::parse(type.config_json, nullptr, false);
+            add_config = defaults.is_object()
+                             ? editable_card_configuration(defaults, type).dump(2) : type.config_json;
+            auto default_space = [&](const std::string &key) {
+                const auto value = defaults.is_object() ? defaults.find(key) : defaults.end();
+                const auto configured = value != defaults.end() && value->is_string()
+                                            ? find_space(value->get<std::string>()) : 0;
+                return configured ? configured : space;
+            };
+            add_io_space = default_space(type.io_space_config_key);
+            add_memory_space = default_space(type.memory_space_config_key);
             if (defaults.is_object())
                 for (auto it = defaults.begin(); it != defaults.end(); ++it)
                     if (it.value().is_string() && project_file_config_key(it.key())) {
@@ -393,11 +410,11 @@ void App::add_card_modal() {
         if (!type.description.empty())
             ImGui::TextDisabled("%s", type.description.c_str());
         select_space("Space");
-        if (type.flags & SRH_CARD_REQUIRES_IO_SPACE) {
-            if (!add_io_space)
-                add_io_space = find_space("cpu0.io") ? find_space("cpu0.io") : space;
+        if (type.flags & SRH_CARD_REQUIRES_IO_SPACE)
             combo_space("I/O space", add_io_space);
-        }
+        if (!type.memory_space_config_key.empty())
+            combo_space(type.memory_space_label.empty() ? "Memory space" : type.memory_space_label.c_str(),
+                        add_memory_space);
         hex_input("Base / reset PC", add_base);
         ImGui::InputScalar("Size", ImGuiDataType_U64, &add_size);
         ImGui::InputInt("Priority", &add_priority);
@@ -425,22 +442,18 @@ void App::add_card_modal() {
         }
         if (type.flags & SRH_CARD_SHOW_CLOCK)
             ImGui::SliderInt("Clock", &add_clock, 0, 2);
+        ImGui::TextUnformatted("Other configuration (JSON)");
+        ImGui::InputTextMultiline("##add_card_config", &add_config, ImVec2(420, 140));
         ImGui::BeginDisabled(!space || project_session.busy());
         if (ImGui::Button("Insert")) {
             try {
                 std::string config_json;
-                nlohmann::json card_config = nlohmann::json::parse(type.config_json);
+                nlohmann::json card_config = nlohmann::json::parse(add_config.empty() ? "{}" : add_config);
                 if (!card_config.is_object())
-                    throw std::runtime_error("Card default configuration must be an object");
-                if (type.flags & SRH_CARD_REQUIRES_IO_SPACE) {
-                    if (!add_io_space)
-                        throw std::runtime_error("Card requires an I/O address space");
-                    if (type.io_space_config_key.empty())
-                        throw std::runtime_error("Card does not define its I/O space config key");
-                    card_config[type.io_space_config_key] = snapshot->inspection->spaces.at(add_io_space).name;
-                }
-                if (!type.base_config_key.empty())
-                    card_config[type.base_config_key] = add_base;
+                    throw std::runtime_error("Plugin configuration must be a JSON object");
+                bind_card_configuration(card_config, type,
+                                        card_space_name(*snapshot->inspection, add_io_space),
+                                        card_space_name(*snapshot->inspection, add_memory_space), add_base);
                 for (const auto &[key, path] : add_project_file_paths)
                     card_config[key] = validated_project_file_path(path.data());
                 config_json = card_config.dump();
@@ -525,7 +538,20 @@ void App::open_card_info(Handle id) {
             std::snprintf(info_rom_paths[index].data(), info_rom_paths[index].size(), "%s",
                           images[index].c_str());
         }
-        const auto config = card.value("config", nlohmann::json::object()).dump(2);
+        auto editable = card.value("config", nlohmann::json::object());
+        info_io_space = info_memory_space = 0;
+        if (type != card_types.end()) {
+            const auto defaults = nlohmann::json::parse(type->config_json);
+            auto configured_space = [&](const std::string &key) {
+                const auto value = editable.contains(key) ? editable.at(key)
+                                  : defaults.value(key, nlohmann::json());
+                return value.is_string() ? find_space(value.get<std::string>()) : info_space;
+            };
+            info_io_space = configured_space(type->io_space_config_key);
+            info_memory_space = configured_space(type->memory_space_config_key);
+            editable = editable_card_configuration(std::move(editable), *type);
+        }
+        const auto config = editable.dump(2);
         info_project_file_paths.clear();
         const auto settings = card.value("config", nlohmann::json::object());
         if (type != card_types.end()) {
@@ -597,7 +623,15 @@ void App::card_info_modal() {
     if (!error.empty())
         ImGui::TextWrapped("%s", error.c_str());
     ImGui::InputText("Friendly name", info_name, sizeof(info_name));
-    combo_space("Space", info_space);
+    combo_space("Space", info_space, false);
+    if (card_type != card_types.end()) {
+        if (card_type->flags & SRH_CARD_REQUIRES_IO_SPACE)
+            combo_space("I/O space", info_io_space, false);
+        if (!card_type->memory_space_config_key.empty())
+            combo_space(card_type->memory_space_label.empty() ? "Memory space"
+                                                              : card_type->memory_space_label.c_str(),
+                        info_memory_space, false);
+    }
     hex_input("Base", info_base);
     ImGui::InputScalar("Size", ImGuiDataType_U64, &info_size);
     hex_input("Reset vector", info_reset_vector);
@@ -625,7 +659,7 @@ void App::card_info_modal() {
             select_project_file_dialog(FileDialogAction::select_info_project_file, key);
         ImGui::EndDisabled();
     }
-    ImGui::TextUnformatted("Plugin configuration (JSON)");
+    ImGui::TextUnformatted("Other configuration (JSON)");
     ImGui::InputTextMultiline("##card_config", info_config, sizeof(info_config), ImVec2(420, 100));
     note_text_input(info_config, sizeof(info_config));
     ImGui::TextDisabled("Applying configuration rebuilds and resets the rack.");
@@ -638,8 +672,11 @@ void App::card_info_modal() {
             if (!config.is_object()) throw std::invalid_argument("Plugin configuration must be a JSON object");
             for (const auto &[key, path] : info_project_file_paths)
                 config[key] = validated_project_file_path(path.data());
-            if (card_type != card_types.end() && !card_type->base_config_key.empty())
-                config[card_type->base_config_key] = info_base;
+            if (card_type != card_types.end()) {
+                bind_card_configuration(config, *card_type,
+                                        card_space_name(*snapshot->inspection, info_io_space),
+                                        card_space_name(*snapshot->inspection, info_memory_space), info_base);
+            }
             ProjectSession::Action action;
             action.kind = ProjectSession::ActionKind::configure;
             action.card = info_card;

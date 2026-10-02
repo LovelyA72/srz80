@@ -119,8 +119,9 @@ class App {
     std::vector<PathBuffer> rom_paths, info_rom_paths;
     std::map<std::string, PathBuffer> add_project_file_paths, info_project_file_paths;
     char info_name[256]{}, info_config[4096]{};
+    std::string add_config;
     std::string error;
-    srz80::Handle selected = 0, space = 0, add_io_space = 0;
+    srz80::Handle selected = 0, space = 0, add_io_space = 0, add_memory_space = 0;
     uint64_t memory_base = 0x1000, add_base = 0x1000, add_size = 256, bp_first = 0xC,
              bp_last = 0xC;
     uint64_t memory_selection_anchor = 0, memory_selection_cursor = 0;
@@ -313,7 +314,7 @@ class App {
     using PendingFileDialog = ProjectDialogResult;
     using FileDialogState = ProjectDialogState;
     using FileDialogRequest = ProjectDialogRequest;
-    bool combo_space(const char *label, srz80::Handle &current);
+    bool combo_space(const char *label, srz80::Handle &current, bool choose_default = true);
     void select_space(const char *label);
     void menu();
     void load_tools();
@@ -421,7 +422,7 @@ class App {
     bool focus_project_text = false;
     bool restore_project_text_cursor = false;
     srz80::Handle info_card = 0;
-    srz80::Handle info_space = 0;
+    srz80::Handle info_space = 0, info_io_space = 0, info_memory_space = 0;
     uint64_t info_base = 0, info_size = 0, info_reset_vector = 0;
     int info_priority = 0, info_clock = 0;
 

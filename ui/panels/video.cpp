@@ -476,9 +476,16 @@ void App::video() {
                         ImGui::TextDisabled("Shader output texture creation failed.");
                     }
                 } else if (display_texture) {
+                    auto *draw_list = ImGui::GetWindowDrawList();
+                    const auto &platform_io = ImGui::GetPlatformIO();
+                    const bool nearest = video_scale_filter != "Linear";
+                    if (nearest)
+                        draw_list->AddCallback(platform_io.DrawCallback_SetSamplerNearest, nullptr);
                     ImGui::Image(ImTextureID(reinterpret_cast<uintptr_t>(display_texture)),
                                  ImVec2(static_cast<float>(target_width),
                                         static_cast<float>(target_height)));
+                    if (nearest)
+                        draw_list->AddCallback(platform_io.DrawCallback_SetSamplerLinear, nullptr);
                     image_drawn = true;
                 } else {
                     ImGui::TextDisabled("Video texture creation failed.");

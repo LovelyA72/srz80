@@ -282,6 +282,8 @@ typedef struct SrzPluginDescriptor {
     uint32_t flags;
     uint32_t image_slot_offset;
     uint32_t image_slot_count;
+    const char *memory_space_config_key;
+    const char *memory_space_label;
 } SrzPluginDescriptor;
 
 typedef struct SrzDisassembly {

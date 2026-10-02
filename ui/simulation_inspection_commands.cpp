@@ -338,6 +338,12 @@ void SimulationController::execute(const CardTypes &, Reply &reply) {
             type.config_json = "{}";
         type.io_space_config_key = engine_text(descriptor->io_space_config_key);
         type.base_config_key = engine_text(descriptor->base_config_key);
+        if (descriptor->struct_size >= offsetof(SrzPluginDescriptor, memory_space_config_key) +
+                                       sizeof(descriptor->memory_space_config_key))
+            type.memory_space_config_key = engine_text(descriptor->memory_space_config_key);
+        if (descriptor->struct_size >= offsetof(SrzPluginDescriptor, memory_space_label) +
+                                       sizeof(descriptor->memory_space_label))
+            type.memory_space_label = engine_text(descriptor->memory_space_label);
         type.default_base = descriptor->default_base;
         type.default_size = descriptor->default_size;
         type.default_reset_vector = descriptor->default_reset_vector;

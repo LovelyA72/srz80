@@ -1151,6 +1151,8 @@ pub extern "C" fn srz80_engine_inspect_plugin(
             flags: 0,
             image_slot_offset: 0,
             image_slot_count: 0,
+            memory_space_config_key: arena.intern(""),
+            memory_space_label: arena.intern(""),
         };
         // Safety: `api` was validated above.
         let has_descriptor = unsafe {
@@ -1162,8 +1164,8 @@ pub extern "C" fn srz80_engine_inspect_plugin(
         };
         if has_descriptor {
             // Safety: the optional field is present and non-null.
-            let source = unsafe { &*(*api).card_descriptor };
-            if source.abi_version != SRH_ABI {
+            let pointer = unsafe { (*api).card_descriptor };
+            if unsafe { (*pointer).abi_version } != SRH_ABI {
                 return fail(
                     engine_mutable,
                     SRH_INVALID,
@@ -1175,13 +1177,25 @@ pub extern "C" fn srz80_engine_inspect_plugin(
             // tail fields are left at their defaults rather than read.
             let required = core::mem::offset_of!(SrhCardDescriptor, base_config_key)
                 + core::mem::size_of::<*const c_char>();
-            if (source.struct_size as usize) < required {
+            let source_size = unsafe { (*pointer).struct_size } as usize;
+            if source_size < required {
                 return fail(
                     engine_mutable,
                     SRH_INVALID,
                     "Invalid card descriptor".to_string(),
                 );
             }
+            // Safety: all descriptor fields permit zero initialization. Copy only
+            // the announced bytes so shorter descriptors never become full references.
+            let mut source: SrhCardDescriptor = unsafe { core::mem::zeroed() };
+            unsafe {
+                core::ptr::copy_nonoverlapping(
+                    pointer.cast::<u8>(),
+                    (&mut source as *mut SrhCardDescriptor).cast::<u8>(),
+                    source_size.min(core::mem::size_of::<SrhCardDescriptor>()),
+                );
+            }
+            let source = &source;
             if !source.category.is_null() && unsafe { *source.category } != 0 {
                 let text = unsafe { crate::core::cstr(source.category) };
                 descriptor.category = arena.intern(&text);
@@ -1219,6 +1233,37 @@ pub extern "C" fn srz80_engine_inspect_plugin(
             if has_base_key && !source.base_config_key.is_null() {
                 let text = unsafe { crate::core::cstr(source.base_config_key) };
                 descriptor.base_config_key = arena.intern(&text);
+            }
+            for (offset, destination) in [
+                (
+                    core::mem::offset_of!(SrhCardDescriptor, memory_space_config_key),
+                    &mut descriptor.memory_space_config_key,
+                ),
+                (
+                    core::mem::offset_of!(SrhCardDescriptor, memory_space_label),
+                    &mut descriptor.memory_space_label,
+                ),
+            ] {
+                // Safety: read each optional pointer only when its field is present.
+                if unsafe {
+                    has_field(
+                        source as *const SrhCardDescriptor,
+                        offset,
+                        core::mem::size_of::<*const c_char>(),
+                    )
+                } {
+                    let pointer = unsafe {
+                        (source as *const SrhCardDescriptor)
+                            .cast::<u8>()
+                            .add(offset)
+                            .cast::<*const c_char>()
+                            .read()
+                    };
+                    if !pointer.is_null() {
+                        let text = unsafe { crate::core::cstr(pointer) };
+                        *destination = arena.intern(&text);
+                    }
+                }
             }
             let has_slots = unsafe {
                 has_field(

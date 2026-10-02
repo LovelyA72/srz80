@@ -37,7 +37,7 @@ fn structure_sizes_match_the_c_headers() {
     assert_eq!(size_of::<ffi::SrzProviderData>(), 56);
     assert_eq!(size_of::<ffi::SrzPluginData>(), 32);
     assert_eq!(size_of::<ffi::SrzInputRecord>(), 32);
-    assert_eq!(size_of::<ffi::SrzPluginDescriptor>(), 120);
+    assert_eq!(size_of::<ffi::SrzPluginDescriptor>(), 136);
     assert_eq!(size_of::<ffi::SrzDisassembly>(), 312);
     assert_eq!(size_of::<ffi::SrzDisassemblyAvailability>(), 280);
     assert_eq!(size_of::<ffi::SrzError>(), 536);
@@ -49,7 +49,7 @@ fn structure_sizes_match_the_c_headers() {
     assert_eq!(size_of::<ffi::SrhMapping>(), 80);
     assert_eq!(size_of::<ffi::SrhImagePart>(), 24);
     assert_eq!(size_of::<ffi::SrhConfigEntry>(), 96);
-    assert_eq!(size_of::<ffi::SrhCardDescriptor>(), 112);
+    assert_eq!(size_of::<ffi::SrhCardDescriptor>(), 128);
     assert_eq!(size_of::<ffi::SrhImageSlotDescriptor>(), 16);
     assert_eq!(size_of::<ffi::SrhPlugin>(), 112);
     assert_eq!(size_of::<ffi::ShouryoHost>(), 160);
@@ -93,6 +93,10 @@ fn tail_field_offsets_match_the_c_headers() {
     assert_eq!(offset_of!(ffi::SrhCardDescriptor, base_config_key), 88);
     assert_eq!(offset_of!(ffi::SrhCardDescriptor, image_slots), 96);
     assert_eq!(offset_of!(ffi::SrhCardDescriptor, image_slot_count), 104);
+    assert_eq!(offset_of!(ffi::SrhCardDescriptor, memory_space_config_key), 112);
+    assert_eq!(offset_of!(ffi::SrhCardDescriptor, memory_space_label), 120);
+    assert_eq!(offset_of!(ffi::SrzPluginDescriptor, memory_space_config_key), 120);
+    assert_eq!(offset_of!(ffi::SrzPluginDescriptor, memory_space_label), 128);
 
     assert_eq!(offset_of!(ffi::ShouryoHost, query), 152);
     assert_eq!(offset_of!(ffi::SrhHostProjectFilesV1, project_root), 16);

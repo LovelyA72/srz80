@@ -87,6 +87,7 @@ void App::project_settings() {
                 const auto title = card_label(row.video_card) + " / Surface " + std::to_string(row.surface + 1);
                 ImGui::TextUnformatted(title.c_str());
                 bool edited = false;
+                bool deleted = false;
                 if (ImGui::BeginTable("input-fields", 2, ImGuiTableFlags_BordersInnerV)) {
                     ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthStretch, 1.0f);
                     ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, 1.0f);
@@ -120,9 +121,21 @@ void App::project_settings() {
                     int mode = row.relative ? 1 : 0;
                     if (ImGui::Combo("##mode", &mode, "Absolute\0Relative\0")) { row.relative = mode == 1; edited = true; }
                     select("Mouse", row.mouse, true);
+                    const auto owner = project_session.input_card_owner(row.video_card);
+                    if (snapshot && std::none_of(snapshot->inspection->cards.begin(),
+                                                  snapshot->inspection->cards.end(), [&](const auto &card) {
+                        return card.id == owner;
+                    })) {
+                        field("");
+                        deleted = ImGui::Button("Delete");
+                    }
                     ImGui::EndTable();
                 }
-                if (edited) {
+                if (deleted) {
+                    std::erase_if(project_input_draft, [&](const auto &r) {
+                        return r.video_card == row.video_card && r.surface == row.surface;
+                    });
+                } else if (edited) {
                     auto found = std::find_if(project_input_draft.begin(), project_input_draft.end(), [&](const auto &r) {
                         return r.video_card == row.video_card && r.surface == row.surface;
                     });

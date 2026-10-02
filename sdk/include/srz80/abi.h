@@ -356,6 +356,11 @@ typedef struct SrhCardDescriptor {
        create(); all image validation and interpretation belong to the plugin. */
     const SrhImageSlotDescriptor *image_slots;
     uint32_t image_slot_count;
+    /* Optional named memory resource used by the card. The host supplies a
+       separate space selector and writes its name to this config key.
+       The label defaults to "Memory space" when null or empty. */
+    const char *memory_space_config_key;
+    const char *memory_space_label;
 } SrhCardDescriptor;
 
 typedef struct ShouryoHost {

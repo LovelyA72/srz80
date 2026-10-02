@@ -374,14 +374,16 @@ void App::poll_project_operation() {
     }
 }
 
-bool App::combo_space(const char *label, srz80::Handle &current) {
+bool App::combo_space(const char *label, srz80::Handle &current, bool choose_default) {
     if (!snapshot)
         return false;
     if (!snapshot->inspection->spaces.contains(current))
-        current = snapshot->inspection->spaces.empty() ? 0 : snapshot->inspection->spaces.begin()->first;
+        current = choose_default && !snapshot->inspection->spaces.empty()
+                      ? snapshot->inspection->spaces.begin()->first : 0;
     bool changed = false;
     if (ImGui::BeginCombo(label,
-                          current ? snapshot->inspection->spaces.at(current).name.c_str() : "No spaces")) {
+                          current ? snapshot->inspection->spaces.at(current).name.c_str()
+                                  : snapshot->inspection->spaces.empty() ? "No spaces" : "Select space")) {
         for (const auto &[id, s] : snapshot->inspection->spaces)
             if (ImGui::Selectable(s.name.c_str(), current == id)) {
                 current = id;

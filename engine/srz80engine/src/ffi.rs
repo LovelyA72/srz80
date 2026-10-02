@@ -237,6 +237,8 @@ pub struct SrhCardDescriptor {
     pub base_config_key: *const c_char,
     pub image_slots: *const SrhImageSlotDescriptor,
     pub image_slot_count: u32,
+    pub memory_space_config_key: *const c_char,
+    pub memory_space_label: *const c_char,
 }
 
 pub type SrhPropertySet = unsafe extern "C" fn(*mut c_void, u32, *const SrhValue) -> SrhStatus;
@@ -821,6 +823,8 @@ pub struct SrzPluginDescriptor {
     pub flags: u32,
     pub image_slot_offset: u32,
     pub image_slot_count: u32,
+    pub memory_space_config_key: *const c_char,
+    pub memory_space_label: *const c_char,
 }
 
 #[repr(C)]
@@ -974,6 +978,8 @@ impl Default for SrzPluginDescriptor {
             flags: 0,
             image_slot_offset: 0,
             image_slot_count: 0,
+            memory_space_config_key: core::ptr::null(),
+            memory_space_label: core::ptr::null(),
         }
     }
 }

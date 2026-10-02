@@ -171,6 +171,8 @@ struct UiCardType {
     std::string config_json = "{}";
     std::string io_space_config_key;
     std::string base_config_key;
+    std::string memory_space_config_key;
+    std::string memory_space_label;
     uint64_t default_base = 0;
     uint64_t default_size = 0;
     uint64_t default_reset_vector = 0;
