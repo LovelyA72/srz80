@@ -109,6 +109,22 @@ typedef struct SrhToolRuntime {
     uint64_t generation, time_ns;
     uint32_t stopped, running;
 } SrhToolRuntime;
+
+#define SRH_TOOL_MEMORY_MAX_RANGES 64u
+#define SRH_TOOL_MEMORY_MAX_BYTES 4096u
+typedef struct SrhToolMemoryRange {
+    SRH_HEADER;
+    SrhHandle space;
+    uint64_t address;
+    uint32_t size;
+} SrhToolMemoryRange;
+typedef struct SrhToolMemoryResult {
+    SRH_HEADER;
+    uint32_t pending;
+    SrhStatus status;
+    uint64_t generation, time_ns;
+    uint32_t size;
+} SrhToolMemoryResult;
 typedef struct SrhToolHostV1 {
     SRH_HEADER;
     void *context;
@@ -193,6 +209,22 @@ typedef struct SrhToolHostV1 {
     SrhStatus(SRH_CALL *input_cancel)(void *, void *client, uint64_t generation,
                                      uint64_t identity, SrhHandle *request);
     SrhStatus(SRH_CALL *runtime_info)(void *, SrhToolRuntime *);
+    /* Asynchronous, side-effect-free bus peeks. Ranges are copied at request,
+       nonempty, sorted by (space,address), disjoint, and limited by the macros
+       above. Results concatenate ranges in that order. A successful batch may
+       contain failed byte statuses. Poll never waits. Pass NULL for both arrays
+       and capacity=0 to query completion/size. Completed data stays available
+       until release. Each array needs capacity >= result.size to copy data.
+       Request requires the current nonzero project generation. Stale execution
+       returns SRH_CONFLICT in result.status. time_ns is the worker capture time.
+       client is a stable tool-owned identity. At most two requests per client,
+       sixteen globally, including released requests still executing. Release
+       does not cancel a worker read. No plugin memory is retained by the worker. */
+    SrhStatus(SRH_CALL *memory_read_request)(void *, void *client, uint64_t generation,
+        const SrhToolMemoryRange *, uint32_t count, SrhHandle *request);
+    SrhStatus(SRH_CALL *memory_read_poll)(void *, void *client, SrhHandle request,
+        SrhToolMemoryResult *, uint8_t *bytes, SrhStatus *statuses, uint32_t capacity);
+    SrhStatus(SRH_CALL *memory_read_release)(void *, void *client, SrhHandle request);
 } SrhToolHostV1;
 
 typedef struct SrhToolPlugin {

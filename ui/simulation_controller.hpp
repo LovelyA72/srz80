@@ -36,6 +36,7 @@ class SimulationController : public ProjectRuntime {
         uint64_t seq = 0;
         uint64_t generation = 0;
         uint64_t memory_revision = 0;
+        uint64_t time_ns = 0;
         SrhStatus status = SRH_OK;
         std::string error;
         std::string text1;
@@ -65,6 +66,8 @@ class SimulationController : public ProjectRuntime {
             std::chrono::steady_clock::now().time_since_epoch()).count() + 1000;
     }
     AsyncReply read_memory_async(Handle space, uint64_t base, uint32_t length, uint64_t generation);
+    struct MemoryRange { Handle space; uint64_t address; uint32_t size; };
+    AsyncReply read_memory_batch_async(std::vector<MemoryRange> ranges, uint64_t generation);
     AsyncReply disassemble_async(Handle card, Handle space, uint64_t start, uint32_t count, uint64_t generation, uint32_t backward_count = 0);
     AsyncReply read_text_async(Handle card, uint64_t generation);
     // Reads the engine's card plugin descriptors on the simulation thread and
@@ -266,6 +269,7 @@ class SimulationController : public ProjectRuntime {
         uint64_t base;
         uint32_t length;
     };
+    struct ReadMemoryBatch { std::vector<MemoryRange> ranges; };
     struct WriteMemory {
         Handle space;
         uint64_t base;
@@ -294,7 +298,7 @@ class SimulationController : public ProjectRuntime {
     std::map<uint64_t, uint64_t> input_identities_;
     void execute(const InputBatch &, Reply &);
     std::atomic<int64_t> provider_interest_until_{0};
-    using CommandPayload = std::variant<InputBatch, ProjectRuntimeRequest, LegacyCommand, Properties, EditProperty, ReadMemory, WriteMemory, LoadMemory, DisassembleRange, TextQuery, CardTypes>;
+    using CommandPayload = std::variant<InputBatch, ProjectRuntimeRequest, LegacyCommand, Properties, EditProperty, ReadMemory, ReadMemoryBatch, WriteMemory, LoadMemory, DisassembleRange, TextQuery, CardTypes>;
 
     // Transport owns sequencing/completion. Payload type determines the operation.
     struct Command {
@@ -319,6 +323,7 @@ class SimulationController : public ProjectRuntime {
     void execute(const Properties &request, Reply &reply);
     void execute(const EditProperty &request, Reply &reply);
     void execute(const ReadMemory &request, Reply &reply);
+    void execute(const ReadMemoryBatch &request, Reply &reply);
     void execute(const WriteMemory &request, Reply &reply);
     void execute(const LoadMemory &request, Reply &reply);
     void execute(const DisassembleRange &request, Reply &reply);

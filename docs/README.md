@@ -5,6 +5,7 @@
 | Document | Covers |
 | --- | --- |
 | [modules.md](modules.md) | Module boundaries and ownership |
+| [tool-memory.md](tool-memory.md) | Asynchronous copied memory reads for GUI tools |
 | [plugin-data.md](plugin-data.md) | Capture, storage, and restoration of plugin-owned project data |
 | [rust-performance.md](rust-performance.md) | Windows measurements of Rust engine hot paths |
 | [threading-review.md](threading-review.md) | Thread ownership and runtime structure |

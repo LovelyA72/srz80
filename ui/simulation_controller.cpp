@@ -191,7 +191,7 @@ bool SimulationController::project_scoped(const CommandPayload &payload) {
 
 bool SimulationController::requires_explicit_generation(const CommandPayload &payload) {
     const auto *legacy = std::get_if<LegacyCommand>(&payload);
-    return std::holds_alternative<InputBatch>(payload) || std::holds_alternative<ProjectRuntimeRequest>(payload) ||
+    return std::holds_alternative<ReadMemoryBatch>(payload) || std::holds_alternative<InputBatch>(payload) || std::holds_alternative<ProjectRuntimeRequest>(payload) ||
            (legacy && legacy->kind == CmdKind::ProviderCommand);
 }
 
@@ -288,6 +288,12 @@ SimulationController::AsyncReply SimulationController::read_memory_async(
     Command c{ReadMemory{.space = space, .base = base, .length = length}};
     c.generation = generation;
     return submit(std::move(c));
+}
+SimulationController::AsyncReply SimulationController::read_memory_batch_async(
+    std::vector<MemoryRange> ranges, uint64_t generation) {
+    Command command{ReadMemoryBatch{std::move(ranges)}};
+    command.generation = generation;
+    return submit(std::move(command));
 }
 SimulationController::AsyncReply SimulationController::disassemble_async(
     Handle card, Handle space, uint64_t start, uint32_t count, uint64_t generation, uint32_t backward_count) {

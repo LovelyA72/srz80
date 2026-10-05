@@ -91,6 +91,38 @@ void SimulationController::execute(const ReadMemory &request, Reply &reply) {
     }
 }
 
+void SimulationController::execute(const ReadMemoryBatch &request, Reply &reply) {
+    // Validate the complete request before peeking any byte
+    if (request.ranges.empty() || request.ranges.size() > SRH_TOOL_MEMORY_MAX_RANGES) {
+        reply.status = SRH_INVALID;
+        return;
+    }
+    const auto spaces = copy_spaces();
+    uint32_t total = 0;
+    const MemoryRange *previous = nullptr;
+    for (const auto &range : request.ranges) {
+        const auto space = spaces.find(range.space);
+        if (!range.size || range.size > SRH_TOOL_MEMORY_MAX_BYTES - total || space == spaces.end() ||
+            range.address > space->second.maximum || range.size - 1 > space->second.maximum - range.address ||
+            (previous && (range.space < previous->space || (range.space == previous->space &&
+                (range.address <= previous->address || range.address - previous->address < previous->size))))) {
+            reply.status = SRH_INVALID;
+            return;
+        }
+        total += range.size;
+        previous = &range;
+    }
+    reply.memory.reserve(total);
+    reply.time_ns = srz80_engine_now(engine_);
+    for (const auto &range : request.ranges) {
+        for (uint32_t offset = 0; offset < range.size; ++offset) {
+            uint8_t value = 0;
+            const auto status = srz80_engine_read(engine_, 0, range.space, range.address + offset, &value, 1);
+            reply.memory.push_back({value, status});
+        }
+    }
+}
+
 void SimulationController::execute(const WriteMemory &request, Reply &reply) {
     if (engine_running()) {
         reply.status = SRH_UNAVAILABLE;

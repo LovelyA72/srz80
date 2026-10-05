@@ -2,6 +2,7 @@
 #include "video_shader_uniforms.hpp"
 #include "tool_dialogs.hpp"
 #include "tool_inputs.hpp"
+#include "tool_memory_reads.hpp"
 #include "host_input.hpp"
 #include "audio_backend.hpp"
 #include "platform_paths.hpp"
@@ -475,6 +476,7 @@ class App {
     SrhHandle next_tool_dialog = 1;
     SrhToolHostV1 tool_host{};
     ToolInputs tool_inputs;
+    ToolMemoryReads tool_memory_reads;
     uint64_t tool_provider_generation = UINT64_MAX, tool_provider_sequence = UINT64_MAX;
     std::string tool_provider_data;
     std::vector<LoadedTool> tools;

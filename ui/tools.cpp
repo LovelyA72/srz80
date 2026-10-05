@@ -585,6 +585,27 @@ void App::load_tools() {
             out->generation = snapshot->generation; out->time_ns = snapshot->now;
             out->stopped = snapshot->stopped(); out->running = snapshot->run_state == UiRunState::running;
             return SRH_OK;
+        },
+        [](void *context, void *client, uint64_t generation, const SrhToolMemoryRange *ranges,
+           uint32_t count, SrhHandle *out) -> SrhStatus {
+            return sdk::guard([&]() -> SrhStatus {
+                if (!context) return SRH_INVALID;
+                auto &app = *static_cast<App *>(context);
+                return app.tool_memory_reads.request(app.controller, client, generation, ranges, count, out);
+            });
+        },
+        [](void *context, void *client, SrhHandle request, SrhToolMemoryResult *out,
+           uint8_t *bytes, SrhStatus *statuses, uint32_t capacity) -> SrhStatus {
+            return sdk::guard([&]() -> SrhStatus {
+                if (!context) return SRH_INVALID;
+                return static_cast<App *>(context)->tool_memory_reads.poll(client, request, out, bytes, statuses, capacity);
+            });
+        },
+        [](void *context, void *client, SrhHandle request) -> SrhStatus {
+            return sdk::guard([&]() -> SrhStatus {
+                if (!context) return SRH_INVALID;
+                return static_cast<App *>(context)->tool_memory_reads.release(client, request);
+            });
         }};
 
     const auto directory = base / "tools";
@@ -638,6 +659,7 @@ void App::load_tools() {
 
 void App::tick_tools(bool visible) {
     tool_inputs.collect();
+    tool_memory_reads.collect();
     for (auto &tool : tools) {
         if (tool.background_failed || !sdk::has_field(tool.api, &SrhToolPlugin::background_tick) ||
             !tool.api->background_tick) continue;
