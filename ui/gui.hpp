@@ -167,7 +167,7 @@ class App {
     bool open_project_settings_requested = false;
     uint64_t project_settings_generation = 0;
     ProjectSession::RackInfo project_settings_draft;
-    int project_gain_draft = 0; // tenths of a dB
+    ProjectAudioSettings project_audio_draft;
     std::vector<InputRoute> project_input_draft;
     ImGuiTextFilter project_settings_filter;
     int project_settings_category = 0;
@@ -228,7 +228,6 @@ class App {
     int audio_buffer_size = 1024;
     bool audio_low_latency = false;
     bool audio_force_mono = false;
-    bool audio_software_clipping = false;
     bool audio_dc_offset_correction = true;
     int scope_timebase_ms = 20;
     float scope_gain = 1.0f;

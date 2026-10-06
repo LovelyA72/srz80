@@ -2,8 +2,8 @@
 //!
 //! Cards render native-rate audio into host-owned interleaved S16 stereo
 //! buffers on the engine thread.  The engine resamples every source to the
-//! host rate, mixes them, applies the master volume,
-//! the optional DC-offset high-pass and the optional soft clipper, then pushes
+//! host rate, mixes them, applies optional DC correction, the master effect
+//! chain (gain, compressor, soft clip), and master volume, then pushes
 //! frames into a bounded queue that the audio device drains from its own
 //! thread.
 
@@ -220,30 +220,28 @@ impl Core {
             }
             {
                 let mut queue = self.audio_queue.borrow_mut();
-                for index in 0..samples {
-                    let channel = index % self.audio_channels as usize;
-                    let mut sample = mixed[index];
-                    if self.audio_dc_correction.get() {
-                        // A deliberately small, deterministic one-pole high-pass
-                        // removes static bias without adding a second thread.
-                        let state = self.audio_dc_state[channel].get();
-                        let next = state + (sample as f64 - state) / 1024.0;
-                        self.audio_dc_state[channel].set(next);
-                        sample -= next as i64;
-                    }
-                    sample = (sample * self.audio_master_volume.get() as i64) / 100;
-                    if self.audio_clipping.get() {
-                        const KNEE: i64 = 30000;
-                        if sample > KNEE {
-                            sample = KNEE + (sample - KNEE) / 4;
-                        } else if sample < -KNEE {
-                            sample = -KNEE + (sample + KNEE) / 4;
+                let mut effects = self.audio_master_effects.borrow_mut();
+                for input in mixed[..samples].chunks_exact(2) {
+                    let mut frame = [input[0] as f64, input[1] as f64];
+                    for (channel, sample) in frame.iter_mut().enumerate() {
+                        if self.audio_dc_correction.get() {
+                            let state = self.audio_dc_state[channel].get();
+                            let next = state + (*sample - state) / 1024.0;
+                            self.audio_dc_state[channel].set(next);
+                            // Preserve the existing high-pass quantization before effects.
+                            *sample -= next as i64 as f64;
                         }
+                        *sample /= 32768.0;
                     }
-                    let output = saturated(sample);
-                    self.audio_master_peaks[channel].set(
-                        self.audio_master_peaks[channel].get().max((output as i32).unsigned_abs()));
-                    queue.push_back(output);
+                    effects.process(&mut frame);
+                    for (channel, sample) in frame.into_iter().enumerate() {
+                        let mut sample = (sample * 32768.0) as i64;
+                        sample = (sample * self.audio_master_volume.get() as i64) / 100;
+                        let output = saturated(sample);
+                        self.audio_master_peaks[channel].set(
+                            self.audio_master_peaks[channel].get().max((output as i32).unsigned_abs()));
+                        queue.push_back(output);
+                    }
                 }
                 let capacity_samples = self.audio_queue_capacity.get() * self.audio_channels as u64;
                 while queue.len() as u64 > capacity_samples {
@@ -548,6 +546,34 @@ impl Core {
         true
     }
 
+    pub fn audio_project_gain_tenths(&self) -> i32 {
+        self.audio_master_effects.borrow_mut()
+            .effect_mut::<crate::master_effects::Gain>(self.audio_gain_slot)
+            .expect("master gain slot").tenths_db
+    }
+
+    pub fn audio_set_project_gain_tenths(&self, tenths: i32) {
+        self.audio_master_effects.borrow_mut()
+            .effect_mut::<crate::master_effects::Gain>(self.audio_gain_slot)
+            .expect("master gain slot").configure(tenths);
+    }
+
+    pub fn audio_compressor(&self) -> SrzAudioCompressor {
+        self.audio_master_effects.borrow_mut()
+            .effect_mut::<crate::master_effects::Compressor>(self.audio_compressor_slot)
+            .expect("master compressor slot").settings
+    }
+
+    pub fn audio_set_compressor(&self, settings: SrzAudioCompressor) -> bool {
+        if !settings.valid() {
+            return false;
+        }
+        self.audio_master_effects.borrow_mut()
+            .effect_mut::<crate::master_effects::Compressor>(self.audio_compressor_slot)
+            .expect("master compressor slot").configure(settings);
+        true
+    }
+
     pub fn audio_master_volume(&self) -> u32 {
         self.audio_master_volume.get()
     }
@@ -571,14 +597,19 @@ impl Core {
     }
 
     pub fn audio_software_clipping(&self) -> bool {
-        self.audio_clipping.get()
+        self.audio_master_effects.borrow_mut()
+            .effect_mut::<crate::master_effects::SoftClip>(self.audio_clip_slot)
+            .expect("master clip slot").enabled
     }
 
     pub fn audio_set_software_clipping(&self, enabled: bool) {
-        self.audio_clipping.set(enabled);
+        self.audio_master_effects.borrow_mut()
+            .effect_mut::<crate::master_effects::SoftClip>(self.audio_clip_slot)
+            .expect("master clip slot").enabled = enabled;
     }
 
     pub fn audio_reset(&self) {
+        self.audio_master_effects.borrow_mut().reset(self.audio_sample_rate);
         for subscription in self.audio_input.borrow_mut().queues.values_mut() {
             subscription.clear();
         }

@@ -1,6 +1,7 @@
 #pragma once
 #include "ui_snapshot.hpp"
 #include "project_runtime.hpp"
+#include "project_audio.hpp"
 #include "pcm_queue.hpp"
 #include <srz80/engine.h>
 #include <array>
@@ -121,7 +122,7 @@ class SimulationController : public ProjectRuntime {
     void set_audio_source_volume(Handle source, uint32_t percent, uint64_t generation = 0);
     void set_audio_source_pan(Handle source, int32_t pan, uint64_t generation = 0);
     void set_audio_source_muted(Handle source, bool muted, uint64_t generation = 0);
-    void set_audio_software_clipping(bool enabled);
+    void set_project_audio(const ProjectAudioSettings &settings, uint64_t generation);
     void set_audio_dc_offset_correction(bool enabled);
     void set_audio_queue_capacity(uint64_t frames);
     void log_message(const std::string &message);
@@ -219,7 +220,7 @@ class SimulationController : public ProjectRuntime {
         AudioSourceVolume,
         AudioSourcePan,
         AudioSourceMuted,
-        AudioSoftwareClipping,
+        ProjectAudio,
         AudioDcOffsetCorrection,
         AudioQueueCapacity,
         Log,
@@ -253,6 +254,7 @@ class SimulationController : public ProjectRuntime {
         std::string text1;
         std::string text2;
         std::optional<CardRequest> card;
+        std::optional<ProjectAudioSettings> audio;
         std::filesystem::path path1;
     };
 
@@ -410,7 +412,6 @@ class SimulationController : public ProjectRuntime {
     std::atomic<SrzAudioResampling> audio_resampling_{SRZ_AUDIO_RESAMPLE_LINEAR};
     std::atomic<uint32_t> audio_master_volume_{100};
     std::atomic<bool> audio_dc_offset_correction_{true};
-    std::atomic<bool> audio_software_clipping_{false};
     uint32_t simulation_load_percent_ = 0;
     double smoothed_load_percent_ = 0;
     uint64_t command_latency_us_ = 0, slice_wall_us_ = 0, discarded_wall_ns_ = 0;

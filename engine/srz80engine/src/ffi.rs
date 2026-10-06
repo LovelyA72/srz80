@@ -757,6 +757,23 @@ pub struct SrzAudioSource {
 
 #[repr(C)]
 #[derive(Clone, Copy)]
+pub struct SrzAudioCompressor {
+    pub abi_version: u32,
+    pub struct_size: u32,
+    pub enabled: u32,
+    pub downward_threshold_db: f32,
+    pub downward_ratio: f32,
+    pub upward_threshold_db: f32,
+    pub upward_ratio: f32,
+    pub attack_ms: f32,
+    pub release_ms: f32,
+    pub knee_db: f32,
+    pub max_boost_db: f32,
+    pub makeup_db: f32,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
 pub struct SrzAudioDiagnostics {
     pub abi_version: u32,
     pub struct_size: u32,

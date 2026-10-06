@@ -9,5 +9,7 @@ namespace srz80::ui {
 const std::string &ui_theme_names();
 bool apply_ui_theme(std::string_view name);
 ImVec4 mixer_meter_color();
+ImU32 section_heading_background();
+void section_heading(const char *text, bool background = false);
 
 } // namespace srz80::ui

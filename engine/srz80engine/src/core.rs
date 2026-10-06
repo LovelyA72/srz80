@@ -589,6 +589,10 @@ pub struct Core {
 
     pub audio_queue: RefCell<VecDeque<i16>>,
     pub audio_mix_scratch: RefCell<Vec<i64>>,
+    pub audio_master_effects: RefCell<crate::master_effects::EffectChain>,
+    pub audio_gain_slot: usize,
+    pub audio_compressor_slot: usize,
+    pub audio_clip_slot: usize,
     pub audio_sample_rate: u32,
     pub audio_channels: u32,
     pub audio_input: RefCell<crate::audio_input::AudioInput>,
@@ -604,7 +608,6 @@ pub struct Core {
     pub audio_master_volume: Cell<u32>,
     pub audio_master_peaks: [Cell<u32>; 2],
     pub audio_dc_correction: Cell<bool>,
-    pub audio_clipping: Cell<bool>,
     pub audio_dc_state: [Cell<f64>; 2],
 
     /// The versioned host tables handed to card plugins.  They are created
@@ -626,6 +629,10 @@ impl Core {
             RunState::Paused => "Paused",
         };
         let config_path = crate::paths::executable_directory().join("config.ini");
+        let mut master_effects = crate::master_effects::EffectChain::default();
+        let gain_slot = master_effects.push(crate::master_effects::Gain::default());
+        let compressor_slot = master_effects.push(crate::master_effects::Compressor::new(audio_sample_rate));
+        let clip_slot = master_effects.push(crate::master_effects::SoftClip::default());
         let core = Core {
             project_root: None,
             next: Cell::new(1),
@@ -685,6 +692,10 @@ impl Core {
             config_entries: RefCell::new(Vec::new()),
             audio_queue: RefCell::new(VecDeque::new()),
             audio_mix_scratch: RefCell::new(vec![0; 1024 * 2]),
+            audio_master_effects: RefCell::new(master_effects),
+            audio_gain_slot: gain_slot,
+            audio_compressor_slot: compressor_slot,
+            audio_clip_slot: clip_slot,
             audio_sample_rate,
             audio_channels: 2,
             audio_input: RefCell::new(crate::audio_input::AudioInput::default()),
@@ -700,7 +711,6 @@ impl Core {
             audio_master_volume: Cell::new(100),
             audio_master_peaks: [Cell::new(0), Cell::new(0)],
             audio_dc_correction: Cell::new(false),
-            audio_clipping: Cell::new(false),
             audio_dc_state: [Cell::new(0.0), Cell::new(0.0)],
             host: OnceCell::new(),
         };

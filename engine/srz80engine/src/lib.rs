@@ -36,6 +36,7 @@ pub mod guard;
 pub mod handle;
 pub mod host;
 pub mod input;
+pub mod master_effects;
 pub mod paths;
 pub mod plugin;
 pub mod plugin_data;

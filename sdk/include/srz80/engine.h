@@ -224,6 +224,26 @@ typedef struct SrzAudioSource {
     uint32_t level_peak;
 } SrzAudioSource;
 
+/* Stereo-linked master compressor. Thresholds are dBFS, ratios are input:output.
+ * Valid ranges: thresholds [-96, 0], ratios [1, 20] (1 bypasses that direction),
+ * attack [0.1, 1000] ms, release [1, 5000] ms, knee [0, 24] dB,
+ * max boost [0, 36] dB, makeup [-24, 24] dB. enabled is 0 or 1.
+ */
+typedef struct SrzAudioCompressor {
+    uint32_t abi_version;
+    uint32_t struct_size;
+    uint32_t enabled;
+    float downward_threshold_db;
+    float downward_ratio;
+    float upward_threshold_db;
+    float upward_ratio;
+    float attack_ms;
+    float release_ms;
+    float knee_db;
+    float max_boost_db;
+    float makeup_db;
+} SrzAudioCompressor;
+
 typedef struct SrzAudioDiagnostics {
     SRZ_HEADER;
     uint64_t queued_frames;
@@ -732,6 +752,22 @@ SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_audio_set_source_pan(SrzEngine *engin
 SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_audio_set_source_muted(SrzEngine *engine,
                                                                   SrhHandle source,
                                                                   uint32_t muted);
+/* Project gain is in tenths of a dB, clamped to [-360, 240]. It is loaded from
+ * audio.gain_db in project JSON and runs before master effects and quantization.
+ */
+SRZ_EXPORT int32_t SRZ_CALL srz80_engine_audio_project_gain_tenths(const SrzEngine *engine);
+SRZ_EXPORT void SRZ_CALL srz80_engine_audio_set_project_gain_tenths(SrzEngine *engine, int32_t tenths);
+/* The internal master chain is gain -> compressor -> soft clip, after DC
+ * correction and before master volume and final 16-bit quantization.
+ * Defaults: disabled; downward -12 dBFS / 4:1, upward -40 dBFS / 2:1,
+ * attack 10 ms, release 100 ms, knee 6 dB, max boost 12 dB, makeup +6 dB.
+ * Invalid settings are rejected without changing the active compressor.
+ */
+SRZ_EXPORT void SRZ_CALL srz80_engine_audio_compressor_defaults(SrzAudioCompressor *out);
+SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_audio_compressor(const SrzEngine *engine,
+                                                          SrzAudioCompressor *out);
+SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_audio_set_compressor(SrzEngine *engine,
+                                                              const SrzAudioCompressor *settings);
 SRZ_EXPORT uint32_t SRZ_CALL srz80_engine_audio_master_volume(const SrzEngine *engine);
 /* Peaks in the final stereo PCM since the previous query. Querying clears them. */
 SRZ_EXPORT SrhStatus SRZ_CALL srz80_engine_audio_master_levels(const SrzEngine *engine,
@@ -740,6 +776,9 @@ SRZ_EXPORT void SRZ_CALL srz80_engine_audio_set_master_volume(SrzEngine *engine,
 SRZ_EXPORT uint32_t SRZ_CALL srz80_engine_audio_dc_offset_correction(const SrzEngine *engine);
 SRZ_EXPORT void SRZ_CALL srz80_engine_audio_set_dc_offset_correction(SrzEngine *engine,
                                                                      uint32_t enabled);
+/* Soft clip is enabled by default. Project JSON stores this toggle in
+ * audio.software_clipping and compressor parameters in audio.compressor.
+ */
 SRZ_EXPORT uint32_t SRZ_CALL srz80_engine_audio_software_clipping(const SrzEngine *engine);
 SRZ_EXPORT void SRZ_CALL srz80_engine_audio_set_software_clipping(SrzEngine *engine,
                                                                   uint32_t enabled);

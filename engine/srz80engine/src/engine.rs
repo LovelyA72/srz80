@@ -2675,6 +2675,82 @@ pub extern "C" fn srz80_engine_audio_set_source_muted(
 }
 
 #[no_mangle]
+pub extern "C" fn srz80_engine_audio_project_gain_tenths(engine: *const EngineHandle) -> i32 {
+    if engine.is_null() { return 0; }
+    // Safety: the caller owns the engine on this thread.
+    match unsafe { (*engine).core() } {
+        Some(core) => core.audio_project_gain_tenths(),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn srz80_engine_audio_set_project_gain_tenths(engine: *mut EngineHandle, tenths: i32) {
+    if engine.is_null() { return; }
+    // Safety: the caller owns the engine on this thread.
+    if let Some(core) = unsafe { (*engine).core() } {
+        guarded_void(engine, || core.audio_set_project_gain_tenths(tenths));
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn srz80_engine_audio_compressor_defaults(out: *mut SrzAudioCompressor) {
+    if !out.is_null() {
+        // Safety: the caller supplies storage for a complete settings structure.
+        unsafe { *out = SrzAudioCompressor::default() };
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn srz80_engine_audio_compressor(
+    engine: *const EngineHandle,
+    out: *mut SrzAudioCompressor,
+) -> SrhStatus {
+    if engine.is_null() || out.is_null() {
+        return SRH_INVALID;
+    }
+    // Safety: the caller owns the engine on this thread.
+    let Some(core) = (unsafe { (*engine).core() }) else {
+        return SRH_INVALID;
+    };
+    guarded(engine as *mut EngineHandle, || {
+        // Safety: the caller supplies storage for a complete settings structure.
+        unsafe { *out = core.audio_compressor() };
+        SRH_OK
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn srz80_engine_audio_set_compressor(
+    engine: *mut EngineHandle,
+    settings: *const SrzAudioCompressor,
+) -> SrhStatus {
+    if engine.is_null() || settings.is_null() {
+        return SRH_INVALID;
+    }
+    // Read only the ABI header until the advertised structure size is validated.
+    // Safety: the caller supplies at least the two-field ABI header.
+    let header = settings.cast::<u32>();
+    if unsafe { *header } != SRZ80_ENGINE_ABI
+        || (unsafe { *header.add(1) } as usize) < core::mem::size_of::<SrzAudioCompressor>()
+    {
+        return fail(engine, SRH_INVALID, "Invalid compressor settings layout".to_string());
+    }
+    // Safety: the caller supplies the validated complete structure and owns the engine.
+    let settings = unsafe { *settings };
+    let Some(core) = (unsafe { (*engine).core() }) else {
+        return SRH_INVALID;
+    };
+    guarded(engine, || {
+        if core.audio_set_compressor(settings) {
+            SRH_OK
+        } else {
+            fail(engine, SRH_INVALID, "Compressor settings are outside their valid ranges".to_string())
+        }
+    })
+}
+
+#[no_mangle]
 pub extern "C" fn srz80_engine_audio_master_volume(engine: *const EngineHandle) -> u32 {
     if engine.is_null() {
         return 0;

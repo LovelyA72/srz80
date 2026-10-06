@@ -114,7 +114,7 @@ struct UiSnapshot {
     uint32_t audio_master_volume = 100;
     std::array<uint32_t, 2> audio_master_levels{};
     bool audio_dc_offset_correction = true;
-    bool audio_software_clipping = false;
+    bool audio_software_clipping = true;
 
     std::shared_ptr<const UiVideoSnapshot> video = std::make_shared<UiVideoSnapshot>();
 

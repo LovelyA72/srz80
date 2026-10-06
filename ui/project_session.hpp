@@ -1,6 +1,7 @@
 #pragma once
 
 #include "project_runtime.hpp"
+#include "project_audio.hpp"
 #include "project_workspace.hpp"
 #include "project_persistence.hpp"
 #include "input_routing.hpp"
@@ -133,7 +134,8 @@ class ProjectSession {
     // engine source handle.
     bool commit_mixer_master(uint32_t percent);
     int audio_gain_tenths() const;
-    bool commit_audio_gain_tenths(int tenths);
+    ProjectAudioSettings audio_settings() const;
+    bool commit_audio_settings(const ProjectAudioSettings &settings);
     RackInfo rack_info() const;
     bool commit_rack_info(RackInfo info);
     bool commit_mixer_source(uint64_t owner, std::string name, uint32_t ordinal,

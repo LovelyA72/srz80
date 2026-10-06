@@ -12,7 +12,6 @@ namespace {
 struct MeterState {
     uint64_t sequence = 0;
     double last_time = 0.0;
-    float gain = 1.0f;
     float level[2]{};
     float target[2]{};
 };
@@ -20,7 +19,7 @@ std::map<Handle, MeterState> meter_states;
 uint64_t meter_generation = 0;
 
 void level_meter(Handle id, uint64_t sequence, const uint32_t *peaks, int channels,
-                 float height, bool silent, float gain = 1.0f) {
+                 float height, bool silent) {
     auto &state = meter_states[id];
     const double now = ImGui::GetTime();
     const float elapsed = static_cast<float>(std::clamp(now - state.last_time, 0.0, 1.0));
@@ -30,8 +29,8 @@ void level_meter(Handle id, uint64_t sequence, const uint32_t *peaks, int channe
             state.level[channel] = 0.0f;
             state.target[channel] = 0.0f;
         } else {
-            if (state.sequence != sequence || state.gain != gain)
-                state.target[channel] = std::clamp(static_cast<float>(peaks[channel]) * gain / 32768.0f,
+            if (state.sequence != sequence)
+                state.target[channel] = std::clamp(static_cast<float>(peaks[channel]) / 32768.0f,
                                                    0.0f, 1.0f);
             const float response = state.target[channel] > state.level[channel] ? 0.045f : 0.25f;
             const float blend = 1.0f - std::exp(-elapsed / response);
@@ -39,7 +38,6 @@ void level_meter(Handle id, uint64_t sequence, const uint32_t *peaks, int channe
         }
     }
     state.sequence = sequence;
-    state.gain = gain;
     constexpr float bar_width = 5.0f;
     constexpr float gap = 2.0f;
     const float width = channels * bar_width + (channels - 1) * gap;
@@ -105,9 +103,8 @@ void App::mixer() {
         project_session.commit_mixer_master(static_cast<uint32_t>(std::clamp(master, 0, 100)));
     }
     ImGui::SameLine(0.0f, 3.0f);
-    const float project_gain = std::pow(10.0f, project_session.audio_gain_tenths() / 200.0f);
     level_meter(0, snapshot->sequence, snapshot->audio_master_levels.data(), 2,
-                strip_height, snapshot->paused(), project_gain);
+                strip_height, snapshot->paused());
     ImGui::TextUnformatted("Master");
     ImGui::PopID();
     ImGui::EndGroup();

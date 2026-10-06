@@ -116,6 +116,48 @@ fn build_project(
             .map_err(|error| format!("Cannot resolve project directory: {error}"))?);
     }
     *core.config.borrow_mut() = host_config.clone();
+    let gain_db = document.get("audio")
+        .and_then(|audio| audio.get("gain_db"))
+        .and_then(serde_json::Value::as_f64)
+        .filter(|gain| gain.is_finite())
+        .unwrap_or(0.0);
+    core.audio_set_project_gain_tenths((gain_db.clamp(-36.0, 24.0) * 10.0).round() as i32);
+    if let Some(audio) = document.get("audio") {
+        if let Some(clip) = audio.get("software_clipping") {
+            core.audio_set_software_clipping(clip.as_bool()
+                .ok_or_else(|| "audio.software_clipping must be a boolean".to_string())?);
+        }
+        if let Some(value) = audio.get("compressor") {
+            if !value.is_object() {
+                return Err("audio.compressor must be an object".to_string());
+            }
+            let mut settings = SrzAudioCompressor::default();
+            if let Some(enabled) = value.get("enabled") {
+                settings.enabled = enabled.as_bool()
+                    .ok_or_else(|| "audio.compressor.enabled must be a boolean".to_string())? as u32;
+            }
+            macro_rules! parameter {
+                ($field:ident) => {
+                    if let Some(number) = value.get(stringify!($field)) {
+                        settings.$field = number.as_f64()
+                            .ok_or_else(|| format!("audio.compressor.{} must be a number", stringify!($field)))? as f32;
+                    }
+                };
+            }
+            parameter!(downward_threshold_db);
+            parameter!(downward_ratio);
+            parameter!(upward_threshold_db);
+            parameter!(upward_ratio);
+            parameter!(attack_ms);
+            parameter!(release_ms);
+            parameter!(knee_db);
+            parameter!(max_boost_db);
+            parameter!(makeup_db);
+            if !core.audio_set_compressor(settings) {
+                return Err("audio.compressor parameters are outside their valid ranges".to_string());
+            }
+        }
+    }
     // The host tables must exist before a plugin can be resolved or created.
     core.initialize_host();
 

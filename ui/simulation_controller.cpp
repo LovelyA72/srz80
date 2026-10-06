@@ -182,7 +182,7 @@ bool SimulationController::project_scoped(const CommandPayload &payload) {
     case CmdKind::ConfigSave: case CmdKind::Log:
     case CmdKind::AudioMasterVolume: case CmdKind::AudioSampleRate: case CmdKind::AudioResampling:
     case CmdKind::AudioQueueCapacity:
-    case CmdKind::AudioSoftwareClipping: case CmdKind::AudioDcOffsetCorrection:
+    case CmdKind::AudioDcOffsetCorrection:
         return false;
     default:
         return true;
@@ -192,7 +192,7 @@ bool SimulationController::project_scoped(const CommandPayload &payload) {
 bool SimulationController::requires_explicit_generation(const CommandPayload &payload) {
     const auto *legacy = std::get_if<LegacyCommand>(&payload);
     return std::holds_alternative<ReadMemoryBatch>(payload) || std::holds_alternative<InputBatch>(payload) || std::holds_alternative<ProjectRuntimeRequest>(payload) ||
-           (legacy && legacy->kind == CmdKind::ProviderCommand);
+           (legacy && (legacy->kind == CmdKind::ProviderCommand || legacy->kind == CmdKind::ProjectAudio));
 }
 
 uint64_t SimulationController::post_command(Command command) {
@@ -410,8 +410,6 @@ void SimulationController::apply_runtime_options() {
     srz80_engine_audio_set_master_volume(engine_, audio_master_volume_.load());
     srz80_engine_audio_set_dc_offset_correction(
         engine_, audio_dc_offset_correction_.load() ? 1u : 0u);
-    srz80_engine_audio_set_software_clipping(engine_,
-                                             audio_software_clipping_.load() ? 1u : 0u);
     srz80_engine_set_trace_capture(engine_, trace_capture_requested_.load() ? 1u : 0u,
                                    trace_capture_operations_requested_.load());
 }
@@ -436,8 +434,6 @@ bool SimulationController::install_candidate(SrzEngine *candidate,
     srz80_engine_audio_set_master_volume(candidate, audio_master_volume_.load());
     srz80_engine_audio_set_dc_offset_correction(
         candidate, audio_dc_offset_correction_.load() ? 1u : 0u);
-    srz80_engine_audio_set_software_clipping(candidate,
-                                             audio_software_clipping_.load() ? 1u : 0u);
     srz80_engine_set_trace_capture(candidate, trace_capture_requested_.load() ? 1u : 0u,
                                    trace_capture_operations_requested_.load());
     if (cards) {

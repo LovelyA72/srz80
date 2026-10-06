@@ -184,12 +184,12 @@ void SimulationController::set_audio_source_muted(Handle source, bool muted, uin
     c.generation = generation;
     post_command(std::move(c));
 }
-void SimulationController::set_audio_software_clipping(bool enabled) {
-    audio_software_clipping_ = enabled;
+void SimulationController::set_project_audio(const ProjectAudioSettings &settings, uint64_t generation) {
     LegacyCommand legacy;
-    legacy.kind = CmdKind::AudioSoftwareClipping;
-    legacy.flag = enabled;
+    legacy.kind = CmdKind::ProjectAudio;
+    legacy.audio = settings;
     Command c{std::move(legacy)};
+    c.generation = generation;
     post_command(std::move(c));
 }
 void SimulationController::set_audio_dc_offset_correction(bool enabled) {

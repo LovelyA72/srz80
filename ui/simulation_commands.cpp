@@ -50,6 +50,18 @@ std::vector<SrzImagePart> read_image_parts(const std::vector<std::filesystem::pa
     return parts;
 }
 
+SrhStatus apply_project_audio(SrzEngine *engine, const ProjectAudioSettings &audio) {
+    const auto &s = audio.compressor;
+    SrzAudioCompressor settings{SRZ_INIT(SrzAudioCompressor), s.enabled ? 1u : 0u,
+        s.downward_threshold_db, s.downward_ratio, s.upward_threshold_db, s.upward_ratio,
+        s.attack_ms, s.release_ms, s.knee_db, s.max_boost_db, s.makeup_db};
+    const auto status = srz80_engine_audio_set_compressor(engine, &settings);
+    if (status != SRH_OK) return status;
+    srz80_engine_audio_set_project_gain_tenths(engine, audio.gain_tenths);
+    srz80_engine_audio_set_software_clipping(engine, audio.software_clipping ? 1u : 0u);
+    return SRH_OK;
+}
+
 // Project mixer entries deliberately use card position/name/ordinal instead of
 // engine handles: cards and sources receive fresh handles on every load.
 void apply_project_mixer(SrzEngine *engine, SrzResult *result, const nlohmann::json &document,
@@ -381,8 +393,9 @@ void SimulationController::execute(const LegacyCommand &command, Reply &reply) {
         if (srz80_engine_audio_set_source_muted(engine_, command.handle1, command.flag ? 1u : 0u) != SRH_OK)
             reply.status = SRH_NOT_FOUND;
         break;
-    case CmdKind::AudioSoftwareClipping:
-        srz80_engine_audio_set_software_clipping(engine_, command.flag ? 1u : 0u);
+    case CmdKind::ProjectAudio:
+        reply.status = command.audio ? apply_project_audio(engine_, *command.audio) : SRH_INVALID;
+        if (reply.status != SRH_OK) reply.error = engine_message();
         break;
     case CmdKind::AudioDcOffsetCorrection:
         srz80_engine_audio_set_dc_offset_correction(engine_, command.flag ? 1u : 0u);
@@ -458,6 +471,8 @@ void SimulationController::execute(const LegacyCommand &command, Reply &reply) {
                 break;
             }
         }
+        if (reply.status == SRH_OK)
+            reply.status = apply_project_audio(engine_, project_audio_settings(project.value("audio", nlohmann::json::object())));
         if (command.flag)
             srz80_engine_pause(engine_);
         reset_audio();
@@ -571,7 +586,7 @@ void SimulationController::invalidate(const LegacyCommand &command, const Reply 
     case CmdKind::Pause: case CmdKind::Resume: case CmdKind::Frequency: case CmdKind::StopClocks:
     case CmdKind::AudioMasterVolume: case CmdKind::AudioSampleRate: case CmdKind::AudioResampling:
     case CmdKind::AudioSourceVolume: case CmdKind::AudioSourcePan: case CmdKind::AudioSourceMuted:
-    case CmdKind::AudioSoftwareClipping: case CmdKind::AudioDcOffsetCorrection: case CmdKind::AudioQueueCapacity:
+    case CmdKind::ProjectAudio: case CmdKind::AudioDcOffsetCorrection: case CmdKind::AudioQueueCapacity:
         force_control_publish_ = true;
         break;
     case CmdKind::ProviderCommand:

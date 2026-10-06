@@ -87,7 +87,8 @@ surface. The report records dimensions, surface and owner IDs, and simulated tim
 `--wav FILE` records every run step into one stereo, 16-bit little-endian PCM WAV.
 `--sample-rate HZ` accepts 8000–384000 Hz and defaults to 44100 Hz. Audio follows
 simulated time, including silence; pauses and inspection add no frames. Mixer mute
-and volume settings apply. Source errors or dropped capture frames fail the run.
+and volume settings apply. Project gain, compressor, and soft clip settings also
+apply to recorded PCM. Source errors or dropped capture frames fail the run.
 Standard RIFF's approximate 4 GiB limit applies.
 
 ## JSON report

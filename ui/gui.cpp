@@ -312,7 +312,6 @@ void App::poll_project_operation() {
                 break;
             case Kind::installed:
                 try {
-                    audio_backend.set_project_gain_tenths(project_session.audio_gain_tenths());
                     invalidate_project_views(effect.clear_workspace);
                     snapshot = controller.snapshot();
                     selected = effect.selected;
@@ -361,7 +360,6 @@ void App::poll_project_operation() {
                 }
                 break;
             case Kind::closed:
-                audio_backend.set_project_gain_tenths(0);
                 invalidate_project_views(true);
                 snapshot = controller.snapshot();
                 show_welcome = true;
@@ -627,7 +625,6 @@ void App::load_config() {
     audio_buffer_size = std::clamp(audio_buffer_size, 32, 4096);
     audio_low_latency = controller.config_get("audio.low_latency", "0") != "0";
     audio_force_mono = controller.config_get("audio.force_mono", "0") != "0";
-    audio_software_clipping = controller.config_get("audio.software_clipping", "0") != "0";
     audio_dc_offset_correction = controller.config_get("audio.dc_offset_correction", "1") != "0";
     int master_volume = 100;
     try {
@@ -637,7 +634,6 @@ void App::load_config() {
     }
     controller.set_audio_master_volume(static_cast<uint32_t>(std::clamp(master_volume, 0, 100)));
     controller.set_audio_dc_offset_correction(audio_dc_offset_correction);
-    controller.set_audio_software_clipping(audio_software_clipping);
     video_render_backend = controller.config_get("video.render_backend", "default");
     video_shader_path = controller.config_get("video.shader_path", "");
     try {
@@ -759,7 +755,6 @@ void App::apply_ui_settings() {
 }
 
 void App::start_audio() {
-    audio_backend.set_project_gain_tenths(project_session.audio_gain_tenths());
     AudioBackendSettings settings;
     settings.input_enabled = audio_input_enabled;
     settings.input_device = audio_input_device;
@@ -1692,21 +1687,6 @@ void App::register_app_config() {
                          app->start_audio();
                      return SRH_OK;
                  });
-    register_one("audio.software_clipping", "Software clipping",
-                 "Runs a soft limiter before the final 16-bit clamp", Srh_CONFIG_BOOL, "0",
-                 [](void *context, char *value, uint32_t capacity) -> SrhStatus {
-                     auto *app = static_cast<App *>(context);
-                     if (!value || !capacity)
-                         return SRH_INVALID;
-                     std::snprintf(value, capacity, "%d", app->audio_software_clipping ? 1 : 0);
-                     return SRH_OK;
-                 },
-                 [](void *context, const char *value) -> SrhStatus {
-                     auto *app = static_cast<App *>(context);
-                     app->audio_software_clipping = std::strcmp(value, "1") == 0;
-                     app->controller.set_audio_software_clipping(app->audio_software_clipping);
-                     return SRH_OK;
-                 });
     register_one("audio.dc_offset_correction", "DC offset correction",
                  "Removes DC offset in the host mixer", Srh_CONFIG_BOOL, "1",
                  [](void *context, char *value, uint32_t capacity) -> SrhStatus {
@@ -1804,7 +1784,6 @@ void App::sync_window_states() {
     post_config_if_changed("audio.buffer_size", std::to_string(audio_buffer_size));
     post_config_if_changed("audio.low_latency", audio_low_latency ? "1" : "0");
     post_config_if_changed("audio.force_mono", audio_force_mono ? "1" : "0");
-    post_config_if_changed("audio.software_clipping", audio_software_clipping ? "1" : "0");
     post_config_if_changed("audio.dc_offset_correction", audio_dc_offset_correction ? "1" : "0");
     post_config_if_changed("audio.master_volume",
                            std::to_string(controller.current_audio_master_volume()));
@@ -1894,7 +1873,6 @@ void App::save_config() {
     set("audio.buffer_size", std::to_string(audio_buffer_size));
     set("audio.low_latency", audio_low_latency ? "1" : "0");
     set("audio.force_mono", audio_force_mono ? "1" : "0");
-    set("audio.software_clipping", audio_software_clipping ? "1" : "0");
     set("audio.dc_offset_correction", audio_dc_offset_correction ? "1" : "0");
     set("audio.master_volume", std::to_string(controller.current_audio_master_volume()));
     set("video.render_backend", video_render_backend);

@@ -1,4 +1,5 @@
 #include "../gui.hpp"
+#include "../theme.hpp"
 #include <misc/cpp/imgui_stdlib.h>
 #include <algorithm>
 #include <cmath>
@@ -8,7 +9,7 @@ namespace srz80::ui {
 void App::open_project_settings() {
     if (!project_session.loaded() || project_session.busy()) return;
     project_settings_draft = project_session.rack_info();
-    project_gain_draft = project_session.audio_gain_tenths();
+    project_audio_draft = project_session.audio_settings();
     project_input_draft = project_session.input_routes();
     host_input.release(window, controller);
     project_settings_generation = project_session.generation();
@@ -43,7 +44,7 @@ void App::project_settings() {
     const char *categories[] = {"Config", "Notes", "Workspace", "Input", "Audio"};
     const char *search_terms[] = {"Application Config Name Author Version", "Application Notes",
                                   "Project Workspace Manifest Directory", "Input Video Keyboard Mouse Mode Relative Absolute",
-                                  "Audio Gain dB"};
+                                  "Audio Gain dB Compressor Downward Upward Threshold Ratio Attack Release Knee Boost Makeup Soft clip"};
     const bool filtering = project_settings_filter.IsActive();
     const float footer = ImGui::GetFrameHeightWithSpacing() + ImGui::GetStyle().ItemSpacing.y;
     ImGui::BeginChild("categories", ImVec2(180, -footer));
@@ -85,7 +86,7 @@ void App::project_settings() {
             for (auto row : rows) {
                 ImGui::PushID(row.video_card.c_str()); ImGui::PushID(static_cast<int>(row.surface));
                 const auto title = card_label(row.video_card) + " / Surface " + std::to_string(row.surface + 1);
-                ImGui::TextUnformatted(title.c_str());
+                section_heading(title.c_str(), true);
                 bool edited = false;
                 bool deleted = false;
                 if (ImGui::BeginTable("input-fields", 2, ImGuiTableFlags_BordersInnerV)) {
@@ -172,10 +173,52 @@ void App::project_settings() {
                 if (row("Notes", "Application Notes"))
                     ImGui::InputTextMultiline("##notes", &project_settings_draft.notes, ImVec2(-FLT_MIN, 240));
             } else if (category == 4) {
-                if (row("Gain", "Audio Gain dB")) {
-                    float db = project_gain_draft / 10.0f;
-                    if (ImGui::SliderFloat("##gain", &db, -36.0f, 24.0f, "%+.1f dB"))
-                        project_gain_draft = static_cast<int>(std::lround(db * 10.0f));
+                auto section = [&](const char *label) {
+                    ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
+                    ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, section_heading_background());
+                    ImGui::TableNextColumn();
+                    section_heading(label);
+                    ImGui::TableNextColumn();
+                };
+                if (!filtering || project_settings_filter.PassFilter("Audio Gain dB")) {
+                    section("Gain");
+                    row("Level", "Audio Gain dB");
+                    float db = project_audio_draft.gain_tenths / 10.0f;
+                    if (ImGui::SliderFloat("##gain", &db, -36.0f, 24.0f, "%+.1f dB", ImGuiSliderFlags_AlwaysClamp))
+                        project_audio_draft.gain_tenths = static_cast<int>(std::lround(db * 10.0f));
+                }
+                const bool compressor_visible = !filtering || project_settings_filter.PassFilter("Audio Compressor") ||
+                    std::any_of(compressor_parameters.begin(), compressor_parameters.end(), [&](const auto &parameter) {
+                        return project_settings_filter.PassFilter((std::string("Audio Compressor ") + parameter.label).c_str());
+                    });
+                if (compressor_visible) section("Compressor");
+                auto &compressor = project_audio_draft.compressor;
+                if (row("Enabled", "Audio Compressor"))
+                    ImGui::Checkbox("##compressor", &compressor.enabled);
+                ImGui::BeginDisabled(!compressor.enabled);
+                for (const auto &parameter : compressor_parameters) {
+                    const std::string terms = std::string("Audio Compressor ") + parameter.label;
+                    if (!row(parameter.label, terms.c_str())) continue;
+                    ImGui::PushID(parameter.key);
+                    const auto flags = ImGuiSliderFlags_AlwaysClamp |
+                        ((parameter.member == &CompressorSettings::attack_ms ||
+                          parameter.member == &CompressorSettings::release_ms) ? ImGuiSliderFlags_Logarithmic : 0);
+                    ImGui::SliderFloat("##value", &(compressor.*parameter.member), parameter.minimum,
+                                       parameter.maximum, parameter.format, flags);
+                    if (ImGui::IsItemHovered()) {
+                        if (parameter.member == &CompressorSettings::downward_ratio ||
+                            parameter.member == &CompressorSettings::upward_ratio)
+                            ImGui::SetTooltip("1:1 disables this compression direction");
+                        else if (parameter.member == &CompressorSettings::knee_db)
+                            ImGui::SetTooltip("Transition width around each threshold. 0 gives a hard knee");
+                    }
+                    ImGui::PopID();
+                }
+                ImGui::EndDisabled();
+                if (!filtering || project_settings_filter.PassFilter("Audio Soft clip")) {
+                    section("Soft clip");
+                    row("Enabled", "Audio Soft clip");
+                    ImGui::Checkbox("##soft-clip", &project_audio_draft.software_clipping);
                 }
             } else {
                 if (row("Manifest", "Project Workspace Manifest"))
@@ -197,12 +240,12 @@ void App::project_settings() {
     // Thumbnail imports can finish while this dialog is open. Preserve their result.
     project_settings_draft.thumbnail = current.thumbnail;
     const bool changed = project_settings_draft != current || project_input_draft != project_session.input_routes() ||
-                         project_gain_draft != project_session.audio_gain_tenths();
+                         project_audio_draft != project_session.audio_settings();
     auto apply = [&] {
         host_input.release(window, controller);
         project_session.commit_input_routes(project_settings_generation, project_input_draft);
-        if (project_session.commit_audio_gain_tenths(project_gain_draft))
-            audio_backend.set_project_gain_tenths(project_gain_draft);
+        if (project_session.commit_audio_settings(project_audio_draft))
+            controller.set_project_audio(project_audio_draft, project_settings_generation);
         if (project_session.commit_rack_info(project_settings_draft))
             rack_info_initialized = false;
     };

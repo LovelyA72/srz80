@@ -26,6 +26,18 @@ document and filesystem operations; runtime changes go through the
 The UI owns platform and presentation concerns. GUI tools use the SDK tool ABI
 and the host's exact Dear ImGui context. Card plugins remain UI-independent.
 
+The engine's master audio chain processes unclipped stereo frames in the order
+gain → compressor → soft clip. Each effect implements `SignalEffect` and owns
+its processing state; `EffectChain` runs and resets the ordered effects. DC
+correction precedes the chain, and master volume and 16-bit quantization follow
+it. Playback, master meters, and headless captures use the resulting PCM.
+
+Project Settings → Audio edits these effects. Project JSON stores gain in
+`audio.gain_db`, the clip toggle in `audio.software_clipping`, and compressor
+values in `audio.compressor`. Missing values default to unity gain, a disabled
+compressor, and enabled soft clip. Compressor keys and ranges are documented
+in [`engine.h`](../sdk/include/srz80/engine.h).
+
 Card and tool implementations are distributed separately and loaded from
 `plugins/` and `tools/` beside the executables. They are not part of this source
 tree.

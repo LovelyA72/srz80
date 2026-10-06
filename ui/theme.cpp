@@ -118,4 +118,33 @@ bool apply_ui_theme(std::string_view name) {
 
 ImVec4 mixer_meter_color() { return current_meter_color; }
 
+ImU32 section_heading_background() {
+    ImVec4 color = ImGui::GetStyleColorVec4(ImGuiCol_TableHeaderBg);
+    color.x += (1.0f - color.x) * 0.12f;
+    color.y += (1.0f - color.y) * 0.12f;
+    color.z += (1.0f - color.z) * 0.12f;
+    color.w = 1.0f;
+    return ImGui::GetColorU32(color);
+}
+
+void section_heading(const char *text, bool background) {
+    const ImVec2 origin = ImGui::GetCursorScreenPos();
+    const ImVec2 padding = ImGui::GetStyle().CellPadding;
+    const float height = ImGui::GetTextLineHeight() + padding.y * 2.0f;
+    if (background) {
+        ImGui::GetWindowDrawList()->AddRectFilled(origin,
+            ImVec2(origin.x + ImGui::GetContentRegionAvail().x, origin.y + height),
+            section_heading_background());
+        ImGui::SetCursorScreenPos(ImVec2(origin.x + padding.x, origin.y + padding.y));
+    }
+    const ImVec2 position = ImGui::GetCursorScreenPos();
+    ImGui::TextUnformatted(text);
+    // Embolden the active font so custom fonts and CJK glyphs retain their face.
+    const float stroke = ImGui::GetFontSize() / 24.0f;
+    ImGui::GetWindowDrawList()->AddText(ImVec2(position.x + stroke, position.y),
+                                      ImGui::GetColorU32(ImGuiCol_Text), text);
+    if (background)
+        ImGui::SetCursorScreenPos(ImVec2(origin.x, origin.y + height + ImGui::GetStyle().ItemSpacing.y));
+}
+
 } // namespace srz80::ui
